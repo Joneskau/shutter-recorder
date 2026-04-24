@@ -1,67 +1,60 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
-using Windows.Win32;
-using Windows.Win32.Foundation;
-using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Shutter.Core;
 
 namespace Shutter.App;
 
-public class HotkeyService : IHotkeyService
+public class HotkeyService : IHotkeyService, IDisposable
 {
-    private const int HotkeyId = 1;
-    private readonly Window? _owner;
-    private HwndSource? _hwndSource;
-    public event EventHandler? HotkeyPressed;
+    private const int WM_HOTKEY = 0x0312;
+    private const int HOTKEY_ID = 1;
+    private const uint MOD_CONTROL = 0x0002;
+    private const uint MOD_ALT = 0x0001;
+    private const uint VK_SPACE = 0x0020;
 
-    public HotkeyService(Window? owner = null)
-    {
-        _owner = owner;
-    }
+    private HwndSource? _source;
+
+    public event EventHandler? HotkeyPressed;
 
     public bool Register()
     {
-        var window = _owner ?? Application.Current.MainWindow;
-        if (window == null) return false;
+        // Create a hidden window to receive WM_HOTKEY messages
+        var helper = new WindowInteropHelper(new Window());
+        helper.EnsureHandle();
+        _source = HwndSource.FromHwnd(helper.Handle);
+        _source.AddHook(WndProc);
 
-        var hwnd = new WindowInteropHelper(window).Handle;
-        if (hwnd == IntPtr.Zero) return false;
-
-        _hwndSource = HwndSource.FromHwnd(hwnd);
-        _hwndSource?.AddHook(HwndHook);
-
-        // Registering Ctrl + Alt + Space
-        return PInvoke.RegisterHotKey(
-            (HWND)hwnd,
-            HotkeyId,
-            HOT_KEY_MODIFIERS.MOD_CONTROL | HOT_KEY_MODIFIERS.MOD_ALT | HOT_KEY_MODIFIERS.MOD_NOREPEAT,
-            (uint)VIRTUAL_KEY.VK_SPACE);
+        return RegisterHotKey(helper.Handle, HOTKEY_ID, MOD_CONTROL | MOD_ALT, VK_SPACE);
     }
 
     public void Unregister()
     {
-        var window = _owner ?? Application.Current.MainWindow;
-        if (window == null) return;
-
-        var hwnd = new WindowInteropHelper(window).Handle;
-        if (hwnd != IntPtr.Zero)
+        if (_source != null)
         {
-            PInvoke.UnregisterHotKey((HWND)hwnd, HotkeyId);
+            UnregisterHotKey(_source.Handle, HOTKEY_ID);
+            _source.RemoveHook(WndProc);
+            _source.Dispose();
+            _source = null;
         }
-
-        _hwndSource?.RemoveHook(HwndHook);
-        _hwndSource = null;
     }
 
-    private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        const int WM_HOTKEY = 0x0312;
-        if (msg == WM_HOTKEY && wParam.ToInt32() == HotkeyId)
+        if (msg == WM_HOTKEY && wParam.ToInt32() == HOTKEY_ID)
         {
             HotkeyPressed?.Invoke(this, EventArgs.Empty);
             handled = true;
         }
         return IntPtr.Zero;
     }
+
+    public void Dispose() => Unregister();
+
+    [DllImport("user32.dll")]
+    private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
+
+    [DllImport("user32.dll")]
+    private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 }

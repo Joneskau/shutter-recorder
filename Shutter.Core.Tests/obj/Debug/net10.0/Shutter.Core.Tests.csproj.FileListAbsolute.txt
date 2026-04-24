@@ -98,3 +98,4 @@ C:\Users\jones\Desktop\Shutter\Shutter.Core.Tests\obj\Debug\net10.0\refint\Shutt
 C:\Users\jones\Desktop\Shutter\Shutter.Core.Tests\obj\Debug\net10.0\Shutter.Core.Tests.pdb
 C:\Users\jones\Desktop\Shutter\Shutter.Core.Tests\obj\Debug\net10.0\Shutter.Core.Tests.genruntimeconfig.cache
 C:\Users\jones\Desktop\Shutter\Shutter.Core.Tests\obj\Debug\net10.0\ref\Shutter.Core.Tests.dll
+C:\Users\jones\Desktop\Shutter\Shutter.Core.Tests\obj\Debug\net10.0\Shutter.Core.Tests.sourcelink.json

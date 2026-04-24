@@ -21,7 +21,7 @@ public partial class App : Application
         Directory.CreateDirectory(OutputFolder);
 
         _recorderService = new RecorderService();
-        _hotkeyService = new HotkeyService(MainWindow);
+        _hotkeyService = new HotkeyService();
 
         _controller = new CaptureController(
             _hotkeyService,

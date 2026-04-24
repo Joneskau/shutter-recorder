@@ -1,12 +1,13 @@
-# .NET defaults
-bin/
-obj/
-*.user
-.vs/
+# Build artifacts
+**/bin/
+**/obj/
 
-# Personal config (anchored — doesn't suppress test fixtures)
-/Shutter.App/config.json
+# Personal settings
+Shutter.App/config.json
 
-# No recording artifacts in history
+# Recording artifacts
 *.wav
 *.wav.tmp
+
+# Rider
+.idea/

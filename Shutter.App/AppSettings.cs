@@ -25,16 +25,17 @@ public sealed class AppSettings
         "ShutterRecorder",
         "settings.json");
 
-    public static AppSettings Load()
+    public static AppSettings Load(string? path = null)
     {
-        if (!File.Exists(SettingsPath))
+        var actualPath = path ?? SettingsPath;
+        if (!File.Exists(actualPath))
         {
             return new AppSettings();
         }
 
         try
         {
-            var json = File.ReadAllText(SettingsPath);
+            var json = File.ReadAllText(actualPath);
             return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
         }
         catch
@@ -43,16 +44,17 @@ public sealed class AppSettings
         }
     }
 
-    public void Save()
+    public void Save(string? path = null)
     {
-        var directory = Path.GetDirectoryName(SettingsPath);
+        var actualPath = path ?? SettingsPath;
+        var directory = Path.GetDirectoryName(actualPath);
         if (!string.IsNullOrWhiteSpace(directory))
         {
             Directory.CreateDirectory(directory);
         }
 
         var json = JsonSerializer.Serialize(this, JsonOptions);
-        File.WriteAllText(SettingsPath, json);
+        File.WriteAllText(actualPath, json);
     }
 
     public HotkeyBinding ToHotkeyBinding()

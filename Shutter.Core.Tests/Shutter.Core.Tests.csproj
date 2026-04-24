@@ -1,25 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
-  <PackageReference Include="coverlet.collector" />
-  <PackageReference Include="Microsoft.NET.Test.Sdk" />
-  <PackageReference Include="xunit" />
-  <PackageReference Include="xunit.runner.visualstudio" />
-</ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="NSubstitute" />
+  </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="NSubstitute" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Shutter.Core\Shutter.Core.csproj" />
+    <ProjectReference Include="..\Shutter.App\Shutter.App.csproj" />
   </ItemGroup>
 
 </Project>

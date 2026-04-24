@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Shutter.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+881cff1d30e8cf54b662c3fd2aabd3e5dad10e5b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dd071363b0018bf4d2a4c7e93cc117010e8d4846")]
 [assembly: System.Reflection.AssemblyProductAttribute("Shutter.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Shutter.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

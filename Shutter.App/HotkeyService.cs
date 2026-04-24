@@ -8,45 +8,72 @@ namespace Shutter.App;
 
 public class HotkeyService : IHotkeyService, IDisposable
 {
-    private const int WM_HOTKEY = 0x0312;
-    private const int HOTKEY_ID = 1;
-    private const uint MOD_CONTROL = 0x0002;
-    private const uint MOD_ALT = 0x0001;
-    private const uint VK_SPACE = 0x0020;
+    private const int WmHotkey = 0x0312;
+    private const int HotkeyId = 1;
+
+    public const uint ModAlt = 0x0001;
+    public const uint ModControl = 0x0002;
+    public const uint ModShift = 0x0004;
+    public const uint ModWin = 0x0008;
 
     private HwndSource? _source;
 
     public event EventHandler? HotkeyPressed;
 
-    public bool Register()
+    public HotkeyBinding Binding { get; private set; } = new()
     {
-        // Create a hidden window to receive WM_HOTKEY messages
-        var helper = new WindowInteropHelper(new Window());
-        helper.EnsureHandle();
-        _source = HwndSource.FromHwnd(helper.Handle);
-        _source.AddHook(WndProc);
+        Key = "R",
+        Shift = true,
+        Win = true
+    };
 
-        return RegisterHotKey(helper.Handle, HOTKEY_ID, MOD_CONTROL | MOD_ALT, VK_SPACE);
+    public bool Register() => Register(Binding);
+
+    public bool Register(HotkeyBinding binding)
+    {
+        Binding = binding;
+        EnsureWindow();
+        return RegisterHotKey(_source!.Handle, HotkeyId, binding.Modifiers, binding.VirtualKey);
+    }
+
+    public bool ReRegister(HotkeyBinding binding)
+    {
+        Unregister();
+        return Register(binding);
     }
 
     public void Unregister()
     {
         if (_source != null)
         {
-            UnregisterHotKey(_source.Handle, HOTKEY_ID);
+            UnregisterHotKey(_source.Handle, HotkeyId);
             _source.RemoveHook(WndProc);
             _source.Dispose();
             _source = null;
         }
     }
 
+    private void EnsureWindow()
+    {
+        if (_source != null)
+        {
+            return;
+        }
+
+        var helper = new WindowInteropHelper(new Window());
+        helper.EnsureHandle();
+        _source = HwndSource.FromHwnd(helper.Handle);
+        _source?.AddHook(WndProc);
+    }
+
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (msg == WM_HOTKEY && wParam.ToInt32() == HOTKEY_ID)
+        if (msg == WmHotkey && wParam.ToInt32() == HotkeyId)
         {
             HotkeyPressed?.Invoke(this, EventArgs.Empty);
             handled = true;
         }
+
         return IntPtr.Zero;
     }
 

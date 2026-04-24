@@ -96,55 +96,7 @@ public partial class App : Application
         _recorderService.LevelAvailable += level => _overlay?.UpdateLevel(level);
 
         _eventBus = new EventBus(_settings.Stealth);
-
-        _eventBus.Subscribe<MicNotFoundEvent>("errorToast", _ =>
-        {
-            _notifications.ShowError("No microphone detected.");
-        });
-
-        _eventBus.Subscribe<RecordingStartedEvent>("widget", e =>
-        {
-            _overlay.StartRecording(e.IsPushToTalk);
-        });
-
-        _eventBus.Subscribe<RecordingSavedEvent>("savedToast", e =>
-        {
-            _notifications.ShowSaved(e.FilePath);
-        });
-
-        _eventBus.Subscribe<RecordingFailedEvent>("errorToast", e =>
-        {
-            _notifications.ShowError(e.Reason);
-        });
-
-        _eventBus.Subscribe<SilenceDetectedEvent>("silenceWarning", _ =>
-        {
-            // The silence warning is an error toast indicating the recording was silent.
-            _notifications.ShowError("Recording was silent.");
-        });
-
-        _eventBus.Subscribe<ClipboardCopiedEvent>("clipboard", e =>
-        {
-            Clipboard.SetText(e.Text);
-        });
-
-        _eventBus.Subscribe<HotkeyCollisionEvent>("errorToast", e =>
-        {
-            var msg = e.Action == "1409"
-                ? "The hotkey is already in use by another app."
-                : $"Failed to register hotkey (error {e.Action}).";
-            MessageBox.Show(msg, "Shutter — Hotkey Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        });
-
-        _eventBus.Subscribe<RecordingSavedEvent>("widget", _ =>
-        {
-            _overlay.StopRecording();
-        });
-
-        _eventBus.Subscribe<RecordingFailedEvent>("widget", _ =>
-        {
-            _overlay.StopRecording();
-        });
+        InitializeEventBusSubscriptions();
 
         _controller = new CaptureController(
             _hotkeyService,
@@ -360,7 +312,7 @@ public partial class App : Application
             return;
         }
 
-        var window = new MainWindow(_hotkeyService.Binding, _recorderService.GetInputDevices(), _recorderService.SelectedDeviceId);
+        var window = new MainWindow(_hotkeyService.Binding, _recorderService.GetInputDevices(), _recorderService.SelectedDeviceId, _settings.Stealth);
         if (window.ShowDialog() != true)
         {
             return;
@@ -387,7 +339,12 @@ public partial class App : Application
         
         _recorderService.SelectedDeviceId = window.SelectedDeviceId;
         _settings.InputDeviceId = window.SelectedDeviceId;
+        _settings.Stealth = window.StealthConfig;
         _settings.Save();
+
+        // Also we must reinitialize the eventbus if stealth config changed
+        _eventBus = new EventBus(_settings.Stealth);
+        InitializeEventBusSubscriptions();
 
         if (_trayIcon != null)
         {
@@ -432,5 +389,59 @@ public partial class App : Application
         }
 
         base.OnExit(e);
+    }
+
+    private void InitializeEventBusSubscriptions()
+    {
+        if (_eventBus == null || _notifications == null || _overlay == null) return;
+
+        // we might subscribe multiple times if we don't clear old event bus but EventBus instance is new.
+        _eventBus.Subscribe<MicNotFoundEvent>("errorToast", _ =>
+        {
+            _notifications.ShowError("No microphone detected.");
+        });
+
+        _eventBus.Subscribe<RecordingStartedEvent>("widget", e =>
+        {
+            _overlay.StartRecording(e.IsPushToTalk);
+        });
+
+        _eventBus.Subscribe<RecordingSavedEvent>("savedToast", e =>
+        {
+            _notifications.ShowSaved(e.FilePath);
+        });
+
+        _eventBus.Subscribe<RecordingFailedEvent>("errorToast", e =>
+        {
+            _notifications.ShowError(e.Reason);
+        });
+
+        _eventBus.Subscribe<SilenceDetectedEvent>("silenceWarning", _ =>
+        {
+            _notifications.ShowError("Recording was silent.");
+        });
+
+        _eventBus.Subscribe<ClipboardCopiedEvent>("clipboard", e =>
+        {
+            Clipboard.SetText(e.Text);
+        });
+
+        _eventBus.Subscribe<HotkeyCollisionEvent>("errorToast", e =>
+        {
+            var msg = e.Action == "1409"
+                ? "The hotkey is already in use by another app."
+                : $"Failed to register hotkey (error {e.Action}).";
+            MessageBox.Show(msg, "Shutter — Hotkey Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        });
+
+        _eventBus.Subscribe<RecordingSavedEvent>("widget", _ =>
+        {
+            _overlay.StopRecording();
+        });
+
+        _eventBus.Subscribe<RecordingFailedEvent>("widget", _ =>
+        {
+            _overlay.StopRecording();
+        });
     }
 }

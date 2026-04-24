@@ -1,13 +1,14 @@
 <Window x:Class="Shutter.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Shutter Settings" Height="390" Width="500"
+        Title="Shutter Settings" Height="650" Width="500"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Background="#131A26"
         Foreground="#EAF0FF">
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -42,13 +43,51 @@
             </StackPanel>
         </Border>
 
-        <TextBlock Grid.Row="4"
+        <Border Grid.Row="4" Style="{StaticResource CardBorderStyle}" Margin="0,12,0,0">
+            <StackPanel>
+                <TextBlock Text="Stealth Mode (v1.1)" Style="{StaticResource SectionTitleStyle}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,8">
+                    <TextBlock Text="Preset:" Foreground="#A4B4D3" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ComboBox x:Name="StealthPresetCombo" Width="120">
+                        <ComboBoxItem Content="off"/>
+                        <ComboBoxItem Content="personal"/>
+                        <ComboBoxItem Content="meeting"/>
+                    </ComboBox>
+                </StackPanel>
+                
+                <TextBlock Text="Runtime Toggle Hotkey:" Foreground="#A4B4D3" Margin="0,0,0,4"/>
+                <WrapPanel Margin="0,0,0,8">
+                    <CheckBox x:Name="StealthToggleWinCheck" Content="Win" Margin="0,0,10,0"/>
+                    <CheckBox x:Name="StealthToggleCtrlCheck" Content="Ctrl" Margin="0,0,10,0"/>
+                    <CheckBox x:Name="StealthToggleAltCheck" Content="Alt" Margin="0,0,10,0"/>
+                    <CheckBox x:Name="StealthToggleShiftCheck" Content="Shift" Margin="0,0,10,0"/>
+                    <ComboBox x:Name="StealthToggleKeyCombo" Width="80"/>
+                </WrapPanel>
+                <TextBlock Foreground="#7F92B8" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8">
+                    Note: Ctrl+Alt+Shift combinations may conflict with screen reader shortcuts (NVDA, JAWS). If you use assistive technology, reassign this hotkey.
+                </TextBlock>
+
+                <TextBlock Text="Quit Hotkey (Tray-less):" Foreground="#A4B4D3" Margin="0,0,0,4"/>
+                <WrapPanel Margin="0,0,0,8">
+                    <CheckBox x:Name="StealthQuitWinCheck" Content="Win" Margin="0,0,10,0"/>
+                    <CheckBox x:Name="StealthQuitCtrlCheck" Content="Ctrl" Margin="0,0,10,0"/>
+                    <CheckBox x:Name="StealthQuitAltCheck" Content="Alt" Margin="0,0,10,0"/>
+                    <CheckBox x:Name="StealthQuitShiftCheck" Content="Shift" Margin="0,0,10,0"/>
+                    <ComboBox x:Name="StealthQuitKeyCombo" Width="80"/>
+                </WrapPanel>
+
+                <CheckBox x:Name="StealthAuditLogCheck" Content="Enable Audit Log" Foreground="#EAF0FF" Margin="0,4,0,0"/>
+                <CheckBox x:Name="StealthAutoHideCheck" Content="Auto-Hide on Screen Share (Meeting preset only)" Foreground="#EAF0FF" Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="5"
                    Margin="2,14,0,0"
                    VerticalAlignment="Top"
                    Foreground="#7F92B8"
                    Text="Tip: Use modifiers + a letter key to avoid conflicts with system shortcuts."/>
 
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
             <Button x:Name="CancelButton" Style="{StaticResource SecondaryButtonStyle}" Content="Cancel" Width="100" Margin="0,0,10,0" Click="OnCancel"/>
             <Button x:Name="SaveButton" Style="{StaticResource PrimaryButtonStyle}" Content="Save" Width="100" Click="OnSave"/>
         </StackPanel>

@@ -1,59 +1,48 @@
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using Shutter.Core;
 
 namespace Shutter.App;
 
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
 public partial class App : Application
 {
     private HotkeyService? _hotkeyService;
     private RecorderService? _recorderService;
     private CaptureController? _controller;
 
+    private static readonly string OutputFolder =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Recordings");
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        Directory.CreateDirectory(OutputFolder);
 
-        _hotkeyService = new HotkeyService();
         _recorderService = new RecorderService();
-        _controller = new CaptureController(_hotkeyService, _recorderService);
+        _hotkeyService = new HotkeyService(MainWindow);
 
-        _controller.RecordingFinished += (s, path) =>
-        {
-            Dispatcher.Invoke(() =>
+        _controller = new CaptureController(
+            _hotkeyService,
+            startRecording: () => _recorderService.Start(OutputFolder),
+            stopRecording: () =>
             {
-                try
-                {
-                    Clipboard.SetText(path);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Failed to copy to clipboard: {ex.Message}", "Shutter", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            });
-        };
-
-        _controller.ErrorOccurred += (s, ex) =>
-        {
-            Dispatcher.Invoke(() =>
-            {
-                MessageBox.Show($"Error: {ex.Message}", "Shutter", MessageBoxButton.OK, MessageBoxImage.Error);
-            });
-        };
-
-        // We need to wait for the window to be loaded to get its HWND for hotkey registration
-        EventManager.RegisterClassHandler(typeof(Window), Window.LoadedEvent, new RoutedEventHandler((s, ev) =>
-        {
-            if (s is MainWindow && _hotkeyService != null)
-            {
-                if (!_hotkeyService.Register())
-                {
-                    MessageBox.Show("Failed to register global hotkey (Ctrl+Alt+Space).", "Shutter", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
+                _recorderService.Stop();
+                var path = _recorderService.LastSavedPath!;
+                Clipboard.SetText(path);
+                MessageBox.Show($"Saved: {Path.GetFileName(path)}", "Shutter");
             }
-        }));
+        );
+
+        if (!_hotkeyService.Register())
+        {
+            var err = Marshal.GetLastWin32Error();
+            var msg = err == 1409
+                ? "Ctrl+Alt+Space is already in use by another app."
+                : $"Failed to register hotkey (error {err}).";
+            MessageBox.Show(msg, "Shutter — Hotkey Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

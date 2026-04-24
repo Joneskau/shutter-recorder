@@ -11,12 +11,18 @@ namespace Shutter.App;
 public class HotkeyService : IHotkeyService
 {
     private const int HotkeyId = 1;
+    private readonly Window? _owner;
     private HwndSource? _hwndSource;
     public event EventHandler? HotkeyPressed;
 
+    public HotkeyService(Window? owner = null)
+    {
+        _owner = owner;
+    }
+
     public bool Register()
     {
-        var window = Application.Current.MainWindow;
+        var window = _owner ?? Application.Current.MainWindow;
         if (window == null) return false;
 
         var hwnd = new WindowInteropHelper(window).Handle;
@@ -35,7 +41,7 @@ public class HotkeyService : IHotkeyService
 
     public void Unregister()
     {
-        var window = Application.Current.MainWindow;
+        var window = _owner ?? Application.Current.MainWindow;
         if (window == null) return;
 
         var hwnd = new WindowInteropHelper(window).Handle;

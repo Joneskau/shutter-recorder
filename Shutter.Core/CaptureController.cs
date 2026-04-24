@@ -1,80 +1,54 @@
 using System;
-using System.IO;
 
 namespace Shutter.Core;
 
-public enum RecorderState { Idle, Starting, Recording, Stopping }
-
 public class CaptureController
 {
-    private readonly IHotkeyService _hotkeyService;
-    private readonly IRecorderService _recorderService;
-    private RecorderState _state = RecorderState.Idle;
+    private readonly IHotkeyService _hotkey;
+    private readonly Action _startRecording;
+    private readonly Action _stopRecording;
 
-    public RecorderState State => _state;
+    public RecorderState State { get; private set; } = RecorderState.Idle;
 
-    public event EventHandler<string>? RecordingFinished;
-    public event EventHandler<Exception>? ErrorOccurred;
-
-    public CaptureController(IHotkeyService hotkeyService, IRecorderService recorderService)
+    public CaptureController(
+        IHotkeyService hotkey,
+        Action startRecording,
+        Action stopRecording)
     {
-        _hotkeyService = hotkeyService;
-        _recorderService = recorderService;
-        _hotkeyService.HotkeyPressed += OnHotkeyPressed;
+        _hotkey = hotkey;
+        _startRecording = startRecording;
+        _stopRecording = stopRecording;
+        _hotkey.HotkeyPressed += OnHotkeyPressed;
     }
 
     private void OnHotkeyPressed(object? sender, EventArgs e)
     {
-        if (_state == RecorderState.Idle)
+        if (State == RecorderState.Idle)
         {
-            StartRecording();
-        }
-        else if (_state == RecorderState.Recording)
-        {
-            StopRecording();
-        }
-    }
-
-    public void StartRecording()
-    {
-        if (_state != RecorderState.Idle) return;
-
-        try
-        {
-            _state = RecorderState.Starting;
-            
-            var outputFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
-            _recorderService.Start(outputFolder);
-            
-            _state = RecorderState.Recording;
-        }
-        catch (Exception ex)
-        {
-            _state = RecorderState.Idle;
-            ErrorOccurred?.Invoke(this, ex);
-        }
-    }
-
-    public void StopRecording()
-    {
-        if (_state != RecorderState.Recording) return;
-
-        try
-        {
-            _state = RecorderState.Stopping;
-            _recorderService.Stop();
-            _state = RecorderState.Idle;
-            
-            var path = _recorderService.LastSavedPath;
-            if (path != null)
+            State = RecorderState.Starting;
+            try
             {
-                RecordingFinished?.Invoke(this, path);
+                _startRecording();
+                State = RecorderState.Recording;
+            }
+            catch
+            {
+                State = RecorderState.Idle;
+                throw; // let the caller surface the error
             }
         }
-        catch (Exception ex)
+        else if (State == RecorderState.Recording)
         {
-            _state = RecorderState.Idle;
-            ErrorOccurred?.Invoke(this, ex);
+            State = RecorderState.Stopping;
+            try
+            {
+                _stopRecording();
+            }
+            finally
+            {
+                State = RecorderState.Idle;
+            }
         }
+        // any other state (Starting, Stopping) — ignore the press
     }
 }

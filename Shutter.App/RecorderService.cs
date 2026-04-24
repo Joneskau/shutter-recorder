@@ -17,11 +17,14 @@ public class RecorderService : IRecorderService, IDisposable
     
     private double _rmsSum;
     private int _rmsCount;
+    private float _peakRms;
 
     public string? LastSavedPath { get; private set; }
     public TimeSpan LastSavedDuration { get; private set; }
     public long LastSavedSizeBytes { get; private set; }
     public bool LastSavedWasSilent { get; private set; }
+    public double LastSavedPeakRms { get; private set; }
+    public Func<string>? BuildFileStem { get; set; }
 
     public event Action<float>? LevelAvailable;
 
@@ -48,9 +51,15 @@ public class RecorderService : IRecorderService, IDisposable
 
         _rmsSum = 0;
         _rmsCount = 0;
+        _peakRms = 0;
 
-        var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-        _tempPath = Path.Combine(outputFolder, $"{timestamp}.wav.tmp");
+        var stem = BuildFileStem?.Invoke() ?? DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        var candidatePath = Path.Combine(outputFolder, $"{stem}.wav.tmp");
+        if (File.Exists(candidatePath))
+        {
+            candidatePath = Path.Combine(outputFolder, $"{stem}_{DateTime.Now:fff}.wav.tmp");
+        }
+        _tempPath = candidatePath;
 
         _writer = new WaveFileWriter(_tempPath, _capture.WaveFormat);
         _capture.DataAvailable += (s, e) =>
@@ -62,6 +71,7 @@ public class RecorderService : IRecorderService, IDisposable
             var rms = CalculateRms(e.Buffer, e.BytesRecorded);
             _rmsSum += rms;
             _rmsCount++;
+            _peakRms = Math.Max(_peakRms, rms);
             LevelAvailable?.Invoke(rms);
         };
 
@@ -76,6 +86,7 @@ public class RecorderService : IRecorderService, IDisposable
     {
         _isPaused = false; // reset in case we stopped while paused
         LastSavedDuration = _writer?.TotalTime ?? TimeSpan.Zero;
+        LastSavedPeakRms = _peakRms;
         
         // Very basic silence detection threshold (e.g. 0.005)
         LastSavedWasSilent = _rmsCount > 0 && (_rmsSum / _rmsCount) < 0.005;

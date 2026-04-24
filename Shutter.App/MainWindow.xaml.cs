@@ -13,11 +13,6 @@ public partial class MainWindow : Window
 
     public HotkeyBinding SelectedHotkey { get; private set; }
     public string? SelectedDeviceId { get; private set; }
-<<<<<<< ours
-    public StealthSettings StealthConfig { get; private set; }
-
-    public MainWindow(HotkeyBinding hotkey, IReadOnlyList<InputDeviceOption> devices, string? selectedDeviceId, StealthSettings stealthConfig)
-=======
     public string SelectedOutputFormat { get; private set; } = "wav";
     public string SelectedQuality { get; private set; } = "standard";
     public string SelectedStealthPreset { get; private set; } = "off";
@@ -31,7 +26,6 @@ public partial class MainWindow : Window
         string quality,
         string stealthPreset,
         string filenameStyle)
->>>>>>> theirs
     {
         InitializeComponent();
 
@@ -55,48 +49,6 @@ public partial class MainWindow : Window
         SelectedDeviceId = selectedDeviceId;
         DeviceCombo.SelectedValue = selectedDeviceId;
 
-<<<<<<< ours
-        StealthConfig = new StealthSettings 
-        {
-            Preset = stealthConfig.Preset,
-            RuntimeToggleHotkey = stealthConfig.RuntimeToggleHotkey,
-            QuitHotkey = stealthConfig.QuitHotkey,
-            AliveReminderAfterMinutes = stealthConfig.AliveReminderAfterMinutes,
-            AliveReminderStyle = stealthConfig.AliveReminderStyle,
-            FilenameStyle = stealthConfig.FilenameStyle,
-            AutoHideOnScreenShare = stealthConfig.AutoHideOnScreenShare,
-            AuditLog = stealthConfig.AuditLog,
-            SuppressOnSuccess = stealthConfig.SuppressOnSuccess.ToList(),
-            NeverSuppress = stealthConfig.NeverSuppress.ToList()
-        };
-
-        foreach(var item in StealthPresetCombo.Items) {
-            if (((System.Windows.Controls.ComboBoxItem)item).Content.ToString() == StealthConfig.Preset) {
-                StealthPresetCombo.SelectedItem = item;
-                break;
-            }
-        }
-        
-        StealthToggleKeyCombo.ItemsSource = allowedKeys;
-        StealthQuitKeyCombo.ItemsSource = allowedKeys;
-        
-        var tHotkey = HotkeyBinding.Parse(StealthConfig.RuntimeToggleHotkey);
-        StealthToggleWinCheck.IsChecked = tHotkey.Win;
-        StealthToggleCtrlCheck.IsChecked = tHotkey.Ctrl;
-        StealthToggleAltCheck.IsChecked = tHotkey.Alt;
-        StealthToggleShiftCheck.IsChecked = tHotkey.Shift;
-        StealthToggleKeyCombo.SelectedItem = tHotkey.Key;
-
-        var qHotkey = HotkeyBinding.Parse(StealthConfig.QuitHotkey);
-        StealthQuitWinCheck.IsChecked = qHotkey.Win;
-        StealthQuitCtrlCheck.IsChecked = qHotkey.Ctrl;
-        StealthQuitAltCheck.IsChecked = qHotkey.Alt;
-        StealthQuitShiftCheck.IsChecked = qHotkey.Shift;
-        StealthQuitKeyCombo.SelectedItem = qHotkey.Key;
-        
-        StealthAuditLogCheck.IsChecked = StealthConfig.AuditLog;
-        StealthAutoHideCheck.IsChecked = StealthConfig.AutoHideOnScreenShare;
-=======
         OutputFormatCombo.ItemsSource = new[] { "wav", "mp3", "opus" };
         QualityCombo.ItemsSource = new[] { "low", "standard", "high" };
         StealthPresetCombo.ItemsSource = new[] { "off", "personal", "meeting" };
@@ -111,7 +63,6 @@ public partial class MainWindow : Window
         SelectedQuality = quality.ToLowerInvariant();
         SelectedStealthPreset = stealthPreset.ToLowerInvariant();
         SelectedFilenameStyle = filenameStyle.ToLowerInvariant();
->>>>>>> theirs
     }
 
     private void OnSave(object sender, RoutedEventArgs e)
@@ -136,45 +87,6 @@ public partial class MainWindow : Window
             Alt = AltCheck.IsChecked == true,
             Shift = ShiftCheck.IsChecked == true
         };
-
-        var tKey = StealthToggleKeyCombo.SelectedItem as string ?? "S";
-        var tHotkey = new HotkeyBinding
-        {
-            Key = tKey,
-            Win = StealthToggleWinCheck.IsChecked == true,
-            Ctrl = StealthToggleCtrlCheck.IsChecked == true,
-            Alt = StealthToggleAltCheck.IsChecked == true,
-            Shift = StealthToggleShiftCheck.IsChecked == true
-        };
-        StealthConfig.RuntimeToggleHotkey = tHotkey.ToString();
-        
-        var qKey = StealthQuitKeyCombo.SelectedItem as string ?? "Q";
-        var qHotkey = new HotkeyBinding
-        {
-            Key = qKey,
-            Win = StealthQuitWinCheck.IsChecked == true,
-            Ctrl = StealthQuitCtrlCheck.IsChecked == true,
-            Alt = StealthQuitAltCheck.IsChecked == true,
-            Shift = StealthQuitShiftCheck.IsChecked == true
-        };
-        StealthConfig.QuitHotkey = qHotkey.ToString();
-        
-        StealthConfig.AuditLog = StealthAuditLogCheck.IsChecked == true;
-        StealthConfig.AutoHideOnScreenShare = StealthAutoHideCheck.IsChecked == true;
-        
-        if (StealthPresetCombo.SelectedItem is System.Windows.Controls.ComboBoxItem presetItem)
-        {
-            StealthConfig.Preset = presetItem.Content.ToString()!;
-            
-            if (StealthConfig.Preset == "personal")
-            {
-                StealthConfig.SuppressOnSuccess = new List<string> { "widget", "savedToast", "trayIcon" };
-            }
-            else
-            {
-                StealthConfig.SuppressOnSuccess = new List<string>();
-            }
-        }
 
         SelectedDeviceId = DeviceCombo.SelectedValue as string;
         SelectedOutputFormat = OutputFormatCombo.SelectedItem as string ?? "wav";

@@ -35,3 +35,5 @@ C:\Users\jones\Desktop\Shutter\Shutter.App\obj\Debug\net10.0-windows10.0.19041.0
 C:\Users\jones\Desktop\Shutter\Shutter.App\obj\Debug\net10.0-windows10.0.19041.0\OverlayWindow.g.cs
 C:\Users\jones\Desktop\Shutter\Shutter.App\bin\Debug\net10.0-windows10.0.19041.0\CommunityToolkit.WinUI.Notifications.dll
 C:\Users\jones\Desktop\Shutter\Shutter.App\bin\Debug\net10.0-windows10.0.19041.0\Hardcodet.NotifyIcon.Wpf.dll
+C:\Users\jones\Desktop\Shutter\Shutter.App\obj\Debug\net10.0-windows10.0.19041.0\HistoryWindow.baml
+C:\Users\jones\Desktop\Shutter\Shutter.App\obj\Debug\net10.0-windows10.0.19041.0\HistoryWindow.g.cs

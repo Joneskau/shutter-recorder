@@ -23,12 +23,6 @@ public sealed class AppSettings
     public double OverlayTop { get; set; } = 20;
     public string? InputDeviceId { get; set; }
 
-    // History window geometry
-    public double HistoryWindowLeft   { get; set; } = 200;
-    public double HistoryWindowTop    { get; set; } = 200;
-    public double HistoryWindowWidth  { get; set; } = 860;
-    public double HistoryWindowHeight { get; set; } = 500;
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true

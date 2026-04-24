@@ -4,8 +4,8 @@ namespace Shutter.Core;
 
 /// <summary>
 /// State machine: Idle → Starting → Recording ↔ Pausing/Paused/Resuming → Stopping → Idle.
-/// Hotkey presses during transient states are silently ignored.
-/// Stop is accepted from both Recording and Paused.
+/// Hotkey presses during any transient state (Starting/Stopping/Pausing/Resuming) are silently ignored.
+/// Stop is accepted from both Recording and Paused states.
 /// </summary>
 public class CaptureController
 {
@@ -15,18 +15,7 @@ public class CaptureController
     private readonly Action _pauseRecording;
     private readonly Action _resumeRecording;
 
-    // Timing — used to compute ActiveDuration excluding paused intervals.
-    private DateTime _sessionStart;
-    private TimeSpan _totalPausedDuration;
-    private DateTime _pauseStart;
-
     public RecorderState State { get; private set; } = RecorderState.Idle;
-
-    /// <summary>
-    /// Active (non-paused) recording duration for the most recently completed session.
-    /// Set just before the stop callback fires so it is readable inside that callback.
-    /// </summary>
-    public TimeSpan ActiveDuration { get; private set; }
 
     public CaptureController(
         IHotkeyService hotkey,
@@ -50,8 +39,6 @@ public class CaptureController
         if (State == RecorderState.Idle)
         {
             State = RecorderState.Starting;
-            _sessionStart = DateTime.Now;
-            _totalPausedDuration = TimeSpan.Zero;
             try
             {
                 _startRecording();
@@ -60,16 +47,12 @@ public class CaptureController
             catch
             {
                 State = RecorderState.Idle;
-                throw;
+                throw; // surface to caller
             }
         }
         else if (State == RecorderState.Recording || State == RecorderState.Paused)
         {
-            // If stopping from Paused, account for the current paused interval.
-            if (State == RecorderState.Paused)
-                _totalPausedDuration += DateTime.Now - _pauseStart;
-
-            ActiveDuration = (DateTime.Now - _sessionStart) - _totalPausedDuration;
+            // Stop is valid from both Recording and Paused states.
             State = RecorderState.Stopping;
             try
             {
@@ -88,7 +71,6 @@ public class CaptureController
         if (State == RecorderState.Recording)
         {
             State = RecorderState.Pausing;
-            _pauseStart = DateTime.Now;
             try
             {
                 _pauseRecording();
@@ -96,13 +78,13 @@ public class CaptureController
             }
             catch
             {
+                // If pause somehow fails, fall back to Recording so the user can still stop.
                 State = RecorderState.Recording;
                 throw;
             }
         }
         else if (State == RecorderState.Paused)
         {
-            _totalPausedDuration += DateTime.Now - _pauseStart;
             State = RecorderState.Resuming;
             try
             {

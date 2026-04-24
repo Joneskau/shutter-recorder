@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using Hardcodet.Wpf.TaskbarNotification;
 using Shutter.Core;
 
@@ -22,6 +23,15 @@ public partial class App : Application
     private TaskbarIcon? _trayIcon;
     private AppSettings? _settings;
     private EventBus? _eventBus;
+    private GlobalHotkeyManager? _globalHotkeys;
+    private StealthAuditLog? _stealthAuditLog;
+    private DispatcherTimer? _aliveReminderTimer;
+    private DateTime _lastInteractionUtc = DateTime.UtcNow;
+    private string _stealthToggleSource = "config";
+    private string _lastStealthPresetForToggle = "personal";
+
+    private const int RuntimeToggleHotkeyId = 11;
+    private const int QuitHotkeyId = 12;
 
     private static readonly string OutputFolder =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Recordings");
@@ -31,9 +41,12 @@ public partial class App : Application
         base.OnStartup(e);
 
         _settings = AppSettings.Load();
+        StealthFilenameService.EnsureSalt(_settings.Stealth);
+        _settings.Save();
         Directory.CreateDirectory(OutputFolder);
 
         _recorderService = new RecorderService { SelectedDeviceId = _settings.InputDeviceId };
+        _recorderService.BuildFileStem = () => StealthFilenameService.BuildFileStem(_settings.Stealth);
         
         if (_settings.RecordingMode == "pushToTalk")
         {
@@ -46,6 +59,7 @@ public partial class App : Application
         
         _overlay = new OverlayWindow();
         _notifications = new NotificationService();
+        _stealthAuditLog = new StealthAuditLog();
         _deviceHealthService = new DeviceHealthService();
         
         // Layer A: Startup health check
@@ -168,6 +182,7 @@ public partial class App : Application
                 
                 _recorderService.Start(OutputFolder);
                 _eventBus.Publish(new RecordingStartedEvent(_settings.RecordingMode == "pushToTalk"));
+                MarkInteraction();
             },
             stopRecording: (save) =>
             {
@@ -178,6 +193,7 @@ public partial class App : Application
                 {
                     if (File.Exists(wavPath)) File.Delete(wavPath);
                     _eventBus.Publish(new RecordingFailedEvent("Recording discarded (too short)."));
+                    WriteStealthAudit("RecordingFailed", wavPath);
                     return;
                 }
                 
@@ -224,6 +240,7 @@ public partial class App : Application
                 if (encoder is WavPassthroughEncoder && quality == QualityPreset.Standard)
                 {
                     _eventBus.Publish(new RecordingSavedEvent(wavPath));
+                    WriteStealthAudit("RecordingSaved", wavPath);
                     return;
                 }
 
@@ -240,6 +257,7 @@ public partial class App : Application
                         Application.Current.Dispatcher.Invoke(() => {
                             _eventBus.Publish(new ClipboardCopiedEvent(encodedPath));
                             _eventBus.Publish(new RecordingSavedEvent(encodedPath));
+                            WriteStealthAudit("RecordingSaved", encodedPath);
                             
                             var fileInfo = new FileInfo(encodedPath);
                             var updatedEntry = entry with {
@@ -256,6 +274,7 @@ public partial class App : Application
                     } catch (Exception) {
                         Application.Current.Dispatcher.Invoke(() => {
                             _eventBus.Publish(new RecordingFailedEvent("Encoding failed — saved as WAV instead."));
+                            WriteStealthAudit("RecordingFailed", wavPath);
                         });
                     }
                 });
@@ -275,7 +294,10 @@ public partial class App : Application
 
         RegisterHotkeyOrShowError(_settings.RecordingMode == "pushToTalk" ? _settings.ToPushToTalkHotkeyBinding() : _settings.ToHotkeyBinding());
         RegisterPauseHotkeyOrShowError(_settings.ToPauseHotkeyBinding());
+        InitializeStealthHotkeys();
         CreateTrayIcon();
+        ApplyStealthPreset(_settings.Stealth.Preset, isStartup: true);
+        StartAliveReminderTimer();
     }
 
     private void CreateTrayIcon()
@@ -360,7 +382,14 @@ public partial class App : Application
             return;
         }
 
-        var window = new MainWindow(_hotkeyService.Binding, _recorderService.GetInputDevices(), _recorderService.SelectedDeviceId);
+        var window = new MainWindow(
+            _hotkeyService.Binding,
+            _recorderService.GetInputDevices(),
+            _recorderService.SelectedDeviceId,
+            _settings.OutputFormat,
+            _settings.Quality,
+            _settings.Stealth.Preset,
+            _settings.Stealth.FilenameStyle);
         if (window.ShowDialog() != true)
         {
             return;
@@ -387,6 +416,10 @@ public partial class App : Application
         
         _recorderService.SelectedDeviceId = window.SelectedDeviceId;
         _settings.InputDeviceId = window.SelectedDeviceId;
+        _settings.OutputFormat = window.SelectedOutputFormat;
+        _settings.Quality = window.SelectedQuality;
+        _settings.Stealth.FilenameStyle = window.SelectedFilenameStyle;
+        ApplyStealthPreset(window.SelectedStealthPreset, isStartup: false);
         _settings.Save();
 
         if (_trayIcon != null)
@@ -417,9 +450,177 @@ public partial class App : Application
         _eventBus?.Publish(new HotkeyCollisionEvent(err.ToString()));
     }
 
+    private void InitializeStealthHotkeys()
+    {
+        _globalHotkeys = new GlobalHotkeyManager();
+        if (!_globalHotkeys.Register(RuntimeToggleHotkeyId, _settings!.Stealth.RuntimeToggleHotkey, ToggleStealthRuntime))
+        {
+            ShowHotkeyError("stealth-toggle");
+        }
+
+        if (!_globalHotkeys.Register(QuitHotkeyId, _settings.Stealth.QuitHotkey, () =>
+            {
+                MarkInteraction();
+                if (string.Equals(_settings.Stealth.Preset, "personal", StringComparison.OrdinalIgnoreCase))
+                {
+                    Shutdown();
+                }
+            }))
+        {
+            ShowHotkeyError("stealth-quit");
+        }
+    }
+
+    private void ToggleStealthRuntime()
+    {
+        if (_settings is null)
+        {
+            return;
+        }
+
+        MarkInteraction();
+        _stealthToggleSource = "hotkey";
+        var current = _settings.Stealth.Preset;
+        if (string.Equals(current, "off", StringComparison.OrdinalIgnoreCase))
+        {
+            var next = string.IsNullOrWhiteSpace(_lastStealthPresetForToggle) ? "personal" : _lastStealthPresetForToggle;
+            ApplyStealthPreset(next, isStartup: false);
+        }
+        else
+        {
+            _lastStealthPresetForToggle = current;
+            ApplyStealthPreset("off", isStartup: false);
+        }
+    }
+
+    private void ApplyStealthPreset(string preset, bool isStartup)
+    {
+        if (_settings is null || _trayIcon is null)
+        {
+            return;
+        }
+
+        _settings.Stealth.Preset = preset;
+
+        if (string.Equals(preset, "personal", StringComparison.OrdinalIgnoreCase))
+        {
+            _settings.Stealth.SuppressOnSuccess = new() { "widget", "savedToast", "trayIcon" };
+            _trayIcon.Visibility = Visibility.Collapsed;
+            ShowStealthOnboardingIfNeeded(isStartup);
+        }
+        else if (string.Equals(preset, "meeting", StringComparison.OrdinalIgnoreCase))
+        {
+            _settings.Stealth.SuppressOnSuccess = new();
+            _trayIcon.Visibility = Visibility.Visible;
+            ShowStealthOnboardingIfNeeded(isStartup);
+        }
+        else
+        {
+            _settings.Stealth.Preset = "off";
+            _settings.Stealth.SuppressOnSuccess = new();
+            _trayIcon.Visibility = Visibility.Visible;
+        }
+
+        _settings.Save();
+    }
+
+    private void ShowStealthOnboardingIfNeeded(bool isStartup)
+    {
+        if (_settings is null || _notifications is null || _settings.Stealth.StealthOnboardingShown)
+        {
+            return;
+        }
+
+        if (isStartup)
+        {
+            MessageBox.Show(
+                $"Stealth mode is now active.{Environment.NewLine}{Environment.NewLine}" +
+                "Shutter is running invisibly. No widget, no tray icon." + Environment.NewLine + Environment.NewLine +
+                $"- Toggle off: {_settings.Stealth.RuntimeToggleHotkey}{Environment.NewLine}" +
+                $"- Quit: {_settings.Stealth.QuitHotkey}{Environment.NewLine}{Environment.NewLine}" +
+                "This message will not appear again.",
+                "Stealth Mode",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        else
+        {
+            _notifications.ShowStealthEnabled(_settings.Stealth.RuntimeToggleHotkey, _settings.Stealth.QuitHotkey);
+        }
+
+        _settings.Stealth.StealthOnboardingShown = true;
+        _settings.Save();
+    }
+
+    private void StartAliveReminderTimer()
+    {
+        _aliveReminderTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
+        _aliveReminderTimer.Tick += (_, _) =>
+        {
+            if (_settings is null || !string.Equals(_settings.Stealth.Preset, "personal", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var elapsed = DateTime.UtcNow - _lastInteractionUtc;
+            if (elapsed.TotalMinutes < _settings.Stealth.AliveReminderAfterMinutes)
+            {
+                return;
+            }
+
+            FlashTaskbarReminder();
+            _lastInteractionUtc = DateTime.UtcNow;
+        };
+        _aliveReminderTimer.Start();
+    }
+
+    private void MarkInteraction() => _lastInteractionUtc = DateTime.UtcNow;
+
+    private void FlashTaskbarReminder()
+    {
+        var hwnd = new System.Windows.Interop.WindowInteropHelper(_overlay!).Handle;
+        if (hwnd == IntPtr.Zero)
+        {
+            return;
+        }
+
+        var fwi = new FLASHWINFO
+        {
+            cbSize = Convert.ToUInt32(Marshal.SizeOf<FLASHWINFO>()),
+            hwnd = hwnd,
+            dwFlags = FLASHW_TRAY | FLASHW_TIMERNOFG,
+            uCount = 6,
+            dwTimeout = 0
+        };
+        _ = FlashWindowEx(ref fwi);
+    }
+
+    private void WriteStealthAudit(string eventName, string filePath)
+    {
+        if (_settings is null || _stealthAuditLog is null || _recorderService is null)
+        {
+            return;
+        }
+
+        if (string.Equals(_settings.Stealth.Preset, "off", StringComparison.OrdinalIgnoreCase) || !_settings.Stealth.AuditLog)
+        {
+            return;
+        }
+
+        _stealthAuditLog.Write(
+            eventName,
+            filePath,
+            _recorderService.LastSavedDuration,
+            _recorderService.LastSavedPeakRms,
+            _settings.Stealth.Preset,
+            _stealthToggleSource);
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
         _trayIcon?.Dispose();
+        _aliveReminderTimer?.Stop();
+        _globalHotkeys?.Dispose();
         _notifications?.Dispose();
         _hotkeyService?.Unregister();
         _deviceHealthService?.Dispose();
@@ -433,4 +634,20 @@ public partial class App : Application
 
         base.OnExit(e);
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FLASHWINFO
+    {
+        public uint cbSize;
+        public IntPtr hwnd;
+        public uint dwFlags;
+        public uint uCount;
+        public uint dwTimeout;
+    }
+
+    private const uint FLASHW_TRAY = 0x00000002;
+    private const uint FLASHW_TIMERNOFG = 0x0000000C;
+
+    [DllImport("user32.dll")]
+    private static extern bool FlashWindowEx(ref FLASHWINFO pwfi);
 }

@@ -14,6 +14,8 @@ public class RecorderService : IRecorderService, IDisposable
 
     public string? LastSavedPath { get; private set; }
 
+    public event Action<float>? LevelAvailable;
+
     public void Start(string outputFolder)
     {
         _capture = new WasapiCapture();
@@ -22,7 +24,11 @@ public class RecorderService : IRecorderService, IDisposable
 
         _writer = new WaveFileWriter(_tempPath, _capture.WaveFormat);
         _capture.DataAvailable += (s, e) =>
+        {
             _writer.Write(e.Buffer, 0, e.BytesRecorded);
+            float rms = CalculateRms(e.Buffer, e.BytesRecorded);
+            LevelAvailable?.Invoke(rms);
+        };
 
         _capture.StartRecording();
     }
@@ -46,5 +52,17 @@ public class RecorderService : IRecorderService, IDisposable
     {
         _writer?.Dispose();
         _capture?.Dispose();
+    }
+
+    private static float CalculateRms(byte[] buffer, int bytesRecorded)
+    {
+        int samples = bytesRecorded / 2;
+        double sum = 0;
+        for (int i = 0; i < bytesRecorded; i += 2)
+        {
+            short sample = BitConverter.ToInt16(buffer, i);
+            sum += sample * sample;
+        }
+        return (float)Math.Sqrt(sum / samples) / short.MaxValue;
     }
 }

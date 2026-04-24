@@ -32,3 +32,5 @@ C:\Users\jones\Desktop\Shutter\Shutter.App\bin\Debug\net10.0-windows10.0.19041.0
 C:\Users\jones\Desktop\Shutter\Shutter.App\bin\Debug\net10.0-windows10.0.19041.0\Shutter.App.pdb
 C:\Users\jones\Desktop\Shutter\Shutter.App\obj\Debug\net10.0-windows10.0.19041.0\Shutter.App.genruntimeconfig.cache
 C:\Users\jones\Desktop\Shutter\Shutter.App\obj\Debug\net10.0-windows10.0.19041.0\ref\Shutter.App.dll
+C:\Users\jones\Desktop\Shutter\Shutter.App\obj\Debug\net10.0-windows10.0.19041.0\OverlayWindow.baml
+C:\Users\jones\Desktop\Shutter\Shutter.App\obj\Debug\net10.0-windows10.0.19041.0\OverlayWindow.g.cs

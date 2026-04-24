@@ -11,6 +11,7 @@ public partial class App : Application
     private HotkeyService? _hotkeyService;
     private RecorderService? _recorderService;
     private CaptureController? _controller;
+    private OverlayWindow? _overlay;
 
     private static readonly string OutputFolder =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Recordings");
@@ -22,13 +23,21 @@ public partial class App : Application
 
         _recorderService = new RecorderService();
         _hotkeyService = new HotkeyService();
+        _overlay = new OverlayWindow();
+
+        _recorderService.LevelAvailable += level => _overlay?.UpdateLevel(level);
 
         _controller = new CaptureController(
             _hotkeyService,
-            startRecording: () => _recorderService.Start(OutputFolder),
+            startRecording: () =>
+            {
+                _recorderService.Start(OutputFolder);
+                _overlay.StartRecording();
+            },
             stopRecording: () =>
             {
                 _recorderService.Stop();
+                _overlay.StopRecording();
                 var path = _recorderService.LastSavedPath!;
                 Clipboard.SetText(path);
                 MessageBox.Show($"Saved: {Path.GetFileName(path)}", "Shutter");

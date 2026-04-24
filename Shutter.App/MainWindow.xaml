@@ -85,7 +85,7 @@
                    Margin="2,14,0,0"
                    VerticalAlignment="Top"
                    Foreground="#7F92B8"
-                   Text="Tip: Use modifiers + a letter key to avoid conflicts with system shortcuts."/>
+                   Text="Tip: Use modifiers + a letter key to avoid conflicts. Ctrl+Alt+Shift chords may conflict with NVDA/JAWS shortcuts."/>
 
         <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
             <Button x:Name="CancelButton" Style="{StaticResource SecondaryButtonStyle}" Content="Cancel" Width="100" Margin="0,0,10,0" Click="OnCancel"/>

@@ -18,6 +18,8 @@ public partial class App : Application
     private NotificationService? _notifications;
     private TaskbarIcon? _trayIcon;
     private AppSettings? _settings;
+    private RecordingHistoryService? _historyService;
+    private HistoryWindow? _historyWindow;
 
     private static readonly string OutputFolder =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Recordings");
@@ -29,6 +31,7 @@ public partial class App : Application
         _settings = AppSettings.Load();
         Directory.CreateDirectory(OutputFolder);
 
+        _historyService  = new RecordingHistoryService();
         _recorderService = new RecorderService { SelectedDeviceId = _settings.InputDeviceId };
         _hotkeyService = new HotkeyService();
         _overlay = new OverlayWindow();
@@ -54,9 +57,26 @@ public partial class App : Application
             {
                 _recorderService.Stop();
                 _overlay.StopRecording();
-                var path = _recorderService.LastSavedPath!;
+                var path     = _recorderService.LastSavedPath!;
+                var duration = _controller?.ActiveDuration ?? TimeSpan.Zero;
                 Clipboard.SetText(path);
                 _notifications?.ShowSaved(path);
+
+                // Persist a history entry after every successful save.
+                try
+                {
+                    var size = new FileInfo(path).Length;
+                    _historyService?.Add(new RecordingEntry
+                    {
+                        FileName   = System.IO.Path.GetFileName(path),
+                        Path       = path,
+                        Duration   = duration.ToString(@"mm\:ss"),
+                        SizeBytes  = size,
+                        RecordedAt = DateTimeOffset.Now,
+                        WasSilent  = false
+                    });
+                }
+                catch { /* history write failure must never abort the save flow */ }
             },
             pauseRecording: () =>
             {
@@ -129,6 +149,11 @@ public partial class App : Application
         }
 
         menu.Items.Add(inputMenu);
+        menu.Items.Add(new Separator());
+
+        var historyItem = new MenuItem { Header = "Recording History..." };
+        historyItem.Click += (_, _) => OpenHistory();
+        menu.Items.Add(historyItem);
         menu.Items.Add(new Separator());
 
         var quitItem = new MenuItem { Header = "Quit" };

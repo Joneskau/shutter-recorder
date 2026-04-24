@@ -11,7 +11,7 @@ namespace Shutter.App;
 
 public partial class App : Application
 {
-    private HotkeyService? _hotkeyService;
+    private IHotkeyService? _hotkeyService;
     private RecorderService? _recorderService;
     private CaptureController? _controller;
     private OverlayWindow? _overlay;
@@ -33,7 +33,16 @@ public partial class App : Application
         Directory.CreateDirectory(OutputFolder);
 
         _recorderService = new RecorderService { SelectedDeviceId = _settings.InputDeviceId };
-        _hotkeyService = new HotkeyService();
+        
+        if (_settings.RecordingMode == "pushToTalk")
+        {
+            _hotkeyService = new LowLevelKeyboardHookService();
+        }
+        else
+        {
+            _hotkeyService = new HotkeyService();
+        }
+        
         _overlay = new OverlayWindow();
         _notifications = new NotificationService();
         _deviceHealthService = new DeviceHealthService();
@@ -106,13 +115,21 @@ public partial class App : Application
                 _overlay.SetFallbackMode(resolution.IsFallback);
                 
                 _recorderService.Start(OutputFolder);
-                _overlay.StartRecording();
+                _overlay.StartRecording(_settings.RecordingMode == "pushToTalk");
             },
-            stopRecording: () =>
+            stopRecording: (save) =>
             {
                 _recorderService.Stop();
                 _overlay.StopRecording();
                 var wavPath = _recorderService.LastSavedPath!;
+                
+                if (!save)
+                {
+                    if (File.Exists(wavPath)) File.Delete(wavPath);
+                    _notifications?.ShowError("Recording discarded (too short).");
+                    return;
+                }
+                
                 Clipboard.SetText(wavPath);
                 
                 var format = _settings!.OutputFormat?.ToLowerInvariant() ?? "wav";
@@ -196,10 +213,11 @@ public partial class App : Application
             {
                 _recorderService.Resume();
                 _overlay.ResumeRecording();
-            }
+            },
+            minimumRecordingMs: _settings.RecordingMode == "pushToTalk" ? _settings.MinimumRecordingMs : 0
         );
 
-        RegisterHotkeyOrShowError(_settings.ToHotkeyBinding());
+        RegisterHotkeyOrShowError(_settings.RecordingMode == "pushToTalk" ? _settings.ToPushToTalkHotkeyBinding() : _settings.ToHotkeyBinding());
         RegisterPauseHotkeyOrShowError(_settings.ToPauseHotkeyBinding());
         CreateTrayIcon();
     }
@@ -293,14 +311,24 @@ public partial class App : Application
         }
 
         var selectedHotkey = window.SelectedHotkey;
-        if (!_hotkeyService.ReRegister(selectedHotkey))
+        
+        _hotkeyService.Unregister();
+        if (!_hotkeyService.Register(selectedHotkey))
         {
             ShowHotkeyError();
-            _hotkeyService.ReRegister(_settings.ToHotkeyBinding());
+            _hotkeyService.Register(_settings.RecordingMode == "pushToTalk" ? _settings.ToPushToTalkHotkeyBinding() : _settings.ToHotkeyBinding());
             return;
         }
 
-        _settings.ApplyHotkeyBinding(selectedHotkey);
+        if (_settings.RecordingMode == "pushToTalk")
+        {
+            _settings.ApplyPushToTalkHotkeyBinding(selectedHotkey);
+        }
+        else
+        {
+            _settings.ApplyHotkeyBinding(selectedHotkey);
+        }
+        
         _recorderService.SelectedDeviceId = window.SelectedDeviceId;
         _settings.InputDeviceId = window.SelectedDeviceId;
         _settings.Save();

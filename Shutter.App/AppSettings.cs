@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using Shutter.Core;
 
 namespace Shutter.App;
 
@@ -11,6 +12,15 @@ public sealed class AppSettings
     public bool HotkeyAlt { get; set; }
     public bool HotkeyShift { get; set; } = true;
     public bool HotkeyWin { get; set; } = true;
+
+    public string RecordingMode { get; set; } = "toggle";
+    public int MinimumRecordingMs { get; set; } = 300;
+
+    public string PushToTalkHotkeyKey { get; set; } = "Space";
+    public bool PushToTalkHotkeyCtrl { get; set; } = true;
+    public bool PushToTalkHotkeyAlt { get; set; } = true;
+    public bool PushToTalkHotkeyShift { get; set; }
+    public bool PushToTalkHotkeyWin { get; set; }
 
     public string OutputFormat { get; set; } = "wav";
     public string Quality { get; set; } = "standard";
@@ -91,6 +101,27 @@ public sealed class AppSettings
         HotkeyAlt = binding.Alt;
         HotkeyShift = binding.Shift;
         HotkeyWin = binding.Win;
+    }
+
+    public HotkeyBinding ToPushToTalkHotkeyBinding()
+    {
+        return new HotkeyBinding
+        {
+            Key = PushToTalkHotkeyKey,
+            Ctrl = PushToTalkHotkeyCtrl,
+            Alt = PushToTalkHotkeyAlt,
+            Shift = PushToTalkHotkeyShift,
+            Win = PushToTalkHotkeyWin
+        };
+    }
+
+    public void ApplyPushToTalkHotkeyBinding(HotkeyBinding binding)
+    {
+        PushToTalkHotkeyKey = binding.Key;
+        PushToTalkHotkeyCtrl = binding.Ctrl;
+        PushToTalkHotkeyAlt = binding.Alt;
+        PushToTalkHotkeyShift = binding.Shift;
+        PushToTalkHotkeyWin = binding.Win;
     }
 
     public HotkeyBinding ToPauseHotkeyBinding()

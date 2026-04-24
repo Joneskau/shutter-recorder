@@ -31,11 +31,11 @@ public partial class OverlayWindow : Window
         Top = point.Y;
     }
 
-    public void StartRecording()
+    public void StartRecording(bool isPushToTalk = false)
     {
         _activeElapsed = TimeSpan.Zero;
         _segmentStart = DateTime.Now;
-        ElapsedText.Text = "00:00";
+        ElapsedText.Text = isPushToTalk ? "Hold to record" : "00:00";
         LevelBar.Value = 0;
         LevelBar.Opacity = 1.0;
         RecordingDot.Visibility = Visibility.Visible;

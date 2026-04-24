@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using Shutter.Core;
 
@@ -19,9 +20,11 @@ public class HotkeyService : IHotkeyService, IDisposable
 
     private HwndSource? _source;
     private Window? _window;
+    private bool _isRecording;
 
-    public event EventHandler? HotkeyPressed;
-    public event EventHandler? PauseHotkeyPressed;
+    public event EventHandler? OnRecordStart;
+    public event EventHandler? OnRecordStop;
+    public event EventHandler? OnPauseToggle;
 
     public HotkeyBinding Binding { get; private set; } = new()
     {
@@ -36,7 +39,7 @@ public class HotkeyService : IHotkeyService, IDisposable
     {
         Binding = binding;
         EnsureWindow();
-        return RegisterHotKey(_source!.Handle, HotkeyId, binding.Modifiers, binding.VirtualKey);
+        return RegisterHotKey(_source!.Handle, HotkeyId, GetModifiers(binding), GetVirtualKey(binding));
     }
 
     public bool ReRegister(HotkeyBinding binding)
@@ -48,13 +51,7 @@ public class HotkeyService : IHotkeyService, IDisposable
     public bool RegisterPause(HotkeyBinding binding)
     {
         EnsureWindow();
-        return RegisterHotKey(_source!.Handle, PauseHotkeyId, binding.Modifiers, binding.VirtualKey);
-    }
-
-    public bool ReRegisterPause(HotkeyBinding binding)
-    {
-        UnregisterPause();
-        return RegisterPause(binding);
+        return RegisterHotKey(_source!.Handle, PauseHotkeyId, GetModifiers(binding), GetVirtualKey(binding));
     }
 
     public void UnregisterPause()
@@ -100,12 +97,21 @@ public class HotkeyService : IHotkeyService, IDisposable
             var id = wParam.ToInt32();
             if (id == HotkeyId)
             {
-                HotkeyPressed?.Invoke(this, EventArgs.Empty);
+                if (!_isRecording)
+                {
+                    _isRecording = true;
+                    OnRecordStart?.Invoke(this, EventArgs.Empty);
+                }
+                else
+                {
+                    _isRecording = false;
+                    OnRecordStop?.Invoke(this, EventArgs.Empty);
+                }
                 handled = true;
             }
             else if (id == PauseHotkeyId)
             {
-                PauseHotkeyPressed?.Invoke(this, EventArgs.Empty);
+                OnPauseToggle?.Invoke(this, EventArgs.Empty);
                 handled = true;
             }
         }
@@ -114,6 +120,22 @@ public class HotkeyService : IHotkeyService, IDisposable
     }
 
     public void Dispose() => Unregister();
+
+    private uint GetModifiers(HotkeyBinding binding)
+    {
+        uint value = 0;
+        if (binding.Alt) value |= ModAlt;
+        if (binding.Ctrl) value |= ModControl;
+        if (binding.Shift) value |= ModShift;
+        if (binding.Win) value |= ModWin;
+        return value;
+    }
+
+    private uint GetVirtualKey(HotkeyBinding binding)
+    {
+        var key = Enum.TryParse<System.Windows.Input.Key>(binding.Key, true, out var k) ? k : System.Windows.Input.Key.R;
+        return (uint)KeyInterop.VirtualKeyFromKey(key);
+    }
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);

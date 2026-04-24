@@ -9,7 +9,7 @@ public class CaptureControllerTests
 {
     private readonly IHotkeyService _hotkeyService;
     private readonly Action _startRecording;
-    private readonly Action _stopRecording;
+    private readonly Action<bool> _stopRecording;
     private readonly Action _pauseRecording;
     private readonly Action _resumeRecording;
     private readonly CaptureController _controller;
@@ -18,7 +18,7 @@ public class CaptureControllerTests
     {
         _hotkeyService = Substitute.For<IHotkeyService>();
         _startRecording = Substitute.For<Action>();
-        _stopRecording = Substitute.For<Action>();
+        _stopRecording = Substitute.For<Action<bool>>();
         _pauseRecording = Substitute.For<Action>();
         _resumeRecording = Substitute.For<Action>();
         _controller = new CaptureController(
@@ -36,7 +36,7 @@ public class CaptureControllerTests
     [Fact]
     public void HotkeyPressed_WhenIdle_StartsRecording()
     {
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty);
+        _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty);
 
         Assert.Equal(RecorderState.Recording, _controller.State);
         _startRecording.Received(1).Invoke();
@@ -45,12 +45,12 @@ public class CaptureControllerTests
     [Fact]
     public void HotkeyPressed_WhenRecording_StopsRecording()
     {
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty); // → Recording
 
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Idle
+        _hotkeyService.OnRecordStop += Raise.EventWith(EventArgs.Empty); // → Idle
 
         Assert.Equal(RecorderState.Idle, _controller.State);
-        _stopRecording.Received(1).Invoke();
+        _stopRecording.Received(1).Invoke(Arg.Any<bool>());
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class CaptureControllerTests
     {
         _startRecording.When(x => x.Invoke()).Do(_ => throw new Exception("Failed to start"));
 
-        Assert.Throws<Exception>(() => _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty));
+        Assert.Throws<Exception>(() => _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty));
         Assert.Equal(RecorderState.Idle, _controller.State);
     }
 
@@ -76,13 +76,13 @@ public class CaptureControllerTests
 
         var firstPressTask = System.Threading.Tasks.Task.Run(() =>
         {
-            _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty);
+            _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty);
         });
 
         syncStart.WaitOne();
 
         // Second press while State == Starting — should be ignored.
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty);
+        _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty);
 
         syncComplete.Set();
         await firstPressTask;
@@ -96,9 +96,9 @@ public class CaptureControllerTests
     [Fact]
     public void PauseHotkey_WhenRecording_TransitionsToPaused()
     {
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty); // → Recording
 
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty);
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty);
 
         Assert.Equal(RecorderState.Paused, _controller.State);
         _pauseRecording.Received(1).Invoke();
@@ -108,10 +108,10 @@ public class CaptureControllerTests
     [Fact]
     public void PauseHotkey_WhenPaused_ResumesToRecording()
     {
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Paused
+        _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty); // → Paused
 
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty); // → Recording
 
         Assert.Equal(RecorderState.Recording, _controller.State);
         _resumeRecording.Received(1).Invoke();
@@ -120,7 +120,7 @@ public class CaptureControllerTests
     [Fact]
     public void PauseHotkey_WhenIdle_IsIgnored()
     {
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty);
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty);
 
         Assert.Equal(RecorderState.Idle, _controller.State);
         _pauseRecording.DidNotReceive().Invoke();
@@ -129,25 +129,25 @@ public class CaptureControllerTests
     [Fact]
     public void StopHotkey_WhenPaused_StopsRecording()
     {
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Paused
+        _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty); // → Paused
 
         // Stop without resuming first — must be accepted from Paused.
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Idle
+        _hotkeyService.OnRecordStop += Raise.EventWith(EventArgs.Empty); // → Idle
 
         Assert.Equal(RecorderState.Idle, _controller.State);
-        _stopRecording.Received(1).Invoke();
+        _stopRecording.Received(1).Invoke(Arg.Any<bool>());
     }
 
     [Fact]
     public void PauseHotkey_CanCycleMultipleTimes()
     {
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty); // → Recording
 
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Paused
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Paused
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty); // → Paused
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty); // → Paused
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty); // → Recording
 
         Assert.Equal(RecorderState.Recording, _controller.State);
         _pauseRecording.Received(2).Invoke();
@@ -157,11 +157,11 @@ public class CaptureControllerTests
     [Fact]
     public void PauseHotkey_WhenPauseFails_RevertsToRecording()
     {
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty); // → Recording
         _pauseRecording.When(x => x.Invoke()).Do(_ => throw new Exception("pause failed"));
 
         Assert.Throws<Exception>(() =>
-            _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty));
+            _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty));
 
         Assert.Equal(RecorderState.Recording, _controller.State);
     }
@@ -169,12 +169,12 @@ public class CaptureControllerTests
     [Fact]
     public void PauseHotkey_WhenResumeFails_RevertsTosPaused()
     {
-        _hotkeyService.HotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Recording
-        _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty); // → Paused
+        _hotkeyService.OnRecordStart += Raise.EventWith(EventArgs.Empty); // → Recording
+        _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty); // → Paused
         _resumeRecording.When(x => x.Invoke()).Do(_ => throw new Exception("resume failed"));
 
         Assert.Throws<Exception>(() =>
-            _hotkeyService.PauseHotkeyPressed += Raise.EventWith(EventArgs.Empty));
+            _hotkeyService.OnPauseToggle += Raise.EventWith(EventArgs.Empty));
 
         Assert.Equal(RecorderState.Paused, _controller.State);
     }

@@ -2,10 +2,14 @@ using System;
 
 namespace Shutter.Core;
 
-public interface IHotkeyService
+public interface IHotkeyService : IDisposable
 {
-    event EventHandler HotkeyPressed;
-    event EventHandler PauseHotkeyPressed;
-    bool Register();
+    event EventHandler OnRecordStart;
+    event EventHandler OnRecordStop;
+    event EventHandler OnPauseToggle;
+
+    HotkeyBinding Binding { get; }
+    bool Register(HotkeyBinding binding);
+    bool RegisterPause(HotkeyBinding binding);
     void Unregister();
 }

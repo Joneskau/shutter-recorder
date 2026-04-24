@@ -17,6 +17,7 @@ public class HotkeyService : IHotkeyService, IDisposable
     public const uint ModWin = 0x0008;
 
     private HwndSource? _source;
+    private Window? _window;
 
     public event EventHandler? HotkeyPressed;
 
@@ -51,6 +52,8 @@ public class HotkeyService : IHotkeyService, IDisposable
             _source.Dispose();
             _source = null;
         }
+
+        _window = null;
     }
 
     private void EnsureWindow()
@@ -60,7 +63,8 @@ public class HotkeyService : IHotkeyService, IDisposable
             return;
         }
 
-        var helper = new WindowInteropHelper(new Window());
+        _window = new Window { ShowInTaskbar = false, Visibility = Visibility.Hidden, WindowStyle = WindowStyle.None };
+        var helper = new WindowInteropHelper(_window);
         helper.EnsureHandle();
         _source = HwndSource.FromHwnd(helper.Handle);
         _source?.AddHook(WndProc);
@@ -79,9 +83,9 @@ public class HotkeyService : IHotkeyService, IDisposable
 
     public void Dispose() => Unregister();
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 }

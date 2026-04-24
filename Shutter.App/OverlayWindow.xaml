@@ -10,11 +10,16 @@
         ShowInTaskbar="False">
     <Border Background="#CC1a1a1a" CornerRadius="8" Padding="12,8" MouseLeftButtonDown="OnDragStart">
         <StackPanel Orientation="Horizontal">
-            <Ellipse Width="10" Height="10" Fill="Red"
+            <!-- Recording indicator: red dot while recording, yellow pause glyph while paused -->
+            <Ellipse x:Name="RecordingDot" Width="10" Height="10" Fill="Red"
                      VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBlock x:Name="PausedGlyph" Text="⏸" Foreground="#FFD700" FontSize="12"
+                       VerticalAlignment="Center" Margin="0,0,8,0" Visibility="Collapsed"/>
             <TextBlock x:Name="ElapsedText" Text="00:00"
                        Foreground="White" FontSize="14"
                        VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <!-- Level bar is kept visible during pause so user can confirm mic is alive;
+                 opacity drops to signal muted state -->
             <ProgressBar x:Name="LevelBar" Width="60" Height="6"
                          Minimum="0" Maximum="100" Value="0"
                          VerticalAlignment="Center"/>

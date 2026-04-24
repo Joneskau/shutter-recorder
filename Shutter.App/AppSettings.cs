@@ -11,6 +11,14 @@ public sealed class AppSettings
     public bool HotkeyAlt { get; set; }
     public bool HotkeyShift { get; set; } = true;
     public bool HotkeyWin { get; set; } = true;
+
+    // Pause/resume hotkey — defaults to Ctrl+Alt+P
+    public string PauseHotkeyKey { get; set; } = "P";
+    public bool PauseHotkeyCtrl { get; set; } = true;
+    public bool PauseHotkeyAlt { get; set; } = true;
+    public bool PauseHotkeyShift { get; set; }
+    public bool PauseHotkeyWin { get; set; }
+
     public double OverlayLeft { get; set; } = 600;
     public double OverlayTop { get; set; } = 20;
     public string? InputDeviceId { get; set; }
@@ -76,6 +84,27 @@ public sealed class AppSettings
         HotkeyAlt = binding.Alt;
         HotkeyShift = binding.Shift;
         HotkeyWin = binding.Win;
+    }
+
+    public HotkeyBinding ToPauseHotkeyBinding()
+    {
+        return new HotkeyBinding
+        {
+            Key = PauseHotkeyKey,
+            Ctrl = PauseHotkeyCtrl,
+            Alt = PauseHotkeyAlt,
+            Shift = PauseHotkeyShift,
+            Win = PauseHotkeyWin
+        };
+    }
+
+    public void ApplyPauseHotkeyBinding(HotkeyBinding binding)
+    {
+        PauseHotkeyKey = binding.Key;
+        PauseHotkeyCtrl = binding.Ctrl;
+        PauseHotkeyAlt = binding.Alt;
+        PauseHotkeyShift = binding.Shift;
+        PauseHotkeyWin = binding.Win;
     }
 
     public Point OverlayPosition => new(OverlayLeft, OverlayTop);

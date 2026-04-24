@@ -8,7 +8,9 @@ namespace Shutter.App;
 public partial class OverlayWindow : Window
 {
     private readonly DispatcherTimer _timer = new();
-    private DateTime _startTime;
+    // Accumulated active recording time — frozen during pause.
+    private TimeSpan _activeElapsed = TimeSpan.Zero;
+    private DateTime _segmentStart;
 
     public event Action<Point>? PositionChanged;
 
@@ -18,8 +20,8 @@ public partial class OverlayWindow : Window
         _timer.Interval = TimeSpan.FromMilliseconds(500);
         _timer.Tick += (s, e) =>
         {
-            var elapsed = DateTime.Now - _startTime;
-            ElapsedText.Text = elapsed.ToString(@"mm\:ss");
+            var total = _activeElapsed + (DateTime.Now - _segmentStart);
+            ElapsedText.Text = total.ToString(@"mm\:ss");
         };
     }
 
@@ -31,16 +33,50 @@ public partial class OverlayWindow : Window
 
     public void StartRecording()
     {
-        _startTime = DateTime.Now;
+        _activeElapsed = TimeSpan.Zero;
+        _segmentStart = DateTime.Now;
         ElapsedText.Text = "00:00";
         LevelBar.Value = 0;
+        LevelBar.Opacity = 1.0;
+        RecordingDot.Visibility = Visibility.Visible;
+        PausedGlyph.Visibility = Visibility.Collapsed;
         _timer.Start();
         Show();
+    }
+
+    /// <summary>
+    /// Freezes the elapsed timer and swaps to the yellow ⏸ indicator.
+    /// The level bar stays visible but dims so the user can still confirm
+    /// the mic is active and ready for resume.
+    /// </summary>
+    public void PauseRecording()
+    {
+        // Snapshot active time before freezing the timer tick.
+        _activeElapsed += DateTime.Now - _segmentStart;
+        _timer.Stop();
+
+        RecordingDot.Visibility = Visibility.Collapsed;
+        PausedGlyph.Visibility = Visibility.Visible;
+        LevelBar.Opacity = 0.35;
+    }
+
+    /// <summary>
+    /// Resumes the elapsed timer from where it was frozen and restores the red indicator.
+    /// </summary>
+    public void ResumeRecording()
+    {
+        _segmentStart = DateTime.Now;
+        _timer.Start();
+
+        RecordingDot.Visibility = Visibility.Visible;
+        PausedGlyph.Visibility = Visibility.Collapsed;
+        LevelBar.Opacity = 1.0;
     }
 
     public void StopRecording()
     {
         _timer.Stop();
+        LevelBar.Opacity = 1.0;
         Hide();
     }
 

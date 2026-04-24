@@ -10,6 +10,7 @@ public class HotkeyService : IHotkeyService, IDisposable
 {
     private const int WmHotkey = 0x0312;
     private const int HotkeyId = 1;
+    private const int PauseHotkeyId = 2;
 
     public const uint ModAlt = 0x0001;
     public const uint ModControl = 0x0002;
@@ -20,6 +21,7 @@ public class HotkeyService : IHotkeyService, IDisposable
     private Window? _window;
 
     public event EventHandler? HotkeyPressed;
+    public event EventHandler? PauseHotkeyPressed;
 
     public HotkeyBinding Binding { get; private set; } = new()
     {
@@ -43,11 +45,32 @@ public class HotkeyService : IHotkeyService, IDisposable
         return Register(binding);
     }
 
+    public bool RegisterPause(HotkeyBinding binding)
+    {
+        EnsureWindow();
+        return RegisterHotKey(_source!.Handle, PauseHotkeyId, binding.Modifiers, binding.VirtualKey);
+    }
+
+    public bool ReRegisterPause(HotkeyBinding binding)
+    {
+        UnregisterPause();
+        return RegisterPause(binding);
+    }
+
+    public void UnregisterPause()
+    {
+        if (_source != null)
+        {
+            UnregisterHotKey(_source.Handle, PauseHotkeyId);
+        }
+    }
+
     public void Unregister()
     {
         if (_source != null)
         {
             UnregisterHotKey(_source.Handle, HotkeyId);
+            UnregisterHotKey(_source.Handle, PauseHotkeyId);
             _source.RemoveHook(WndProc);
             _source.Dispose();
             _source = null;
@@ -72,10 +95,19 @@ public class HotkeyService : IHotkeyService, IDisposable
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (msg == WmHotkey && wParam.ToInt32() == HotkeyId)
+        if (msg == WmHotkey)
         {
-            HotkeyPressed?.Invoke(this, EventArgs.Empty);
-            handled = true;
+            var id = wParam.ToInt32();
+            if (id == HotkeyId)
+            {
+                HotkeyPressed?.Invoke(this, EventArgs.Empty);
+                handled = true;
+            }
+            else if (id == PauseHotkeyId)
+            {
+                PauseHotkeyPressed?.Invoke(this, EventArgs.Empty);
+                handled = true;
+            }
         }
 
         return IntPtr.Zero;

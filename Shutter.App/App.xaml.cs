@@ -57,10 +57,21 @@ public partial class App : Application
                 var path = _recorderService.LastSavedPath!;
                 Clipboard.SetText(path);
                 _notifications?.ShowSaved(path);
+            },
+            pauseRecording: () =>
+            {
+                _recorderService.Pause();
+                _overlay.PauseRecording();
+            },
+            resumeRecording: () =>
+            {
+                _recorderService.Resume();
+                _overlay.ResumeRecording();
             }
         );
 
         RegisterHotkeyOrShowError(_settings.ToHotkeyBinding());
+        RegisterPauseHotkeyOrShowError(_settings.ToPauseHotkeyBinding());
         CreateTrayIcon();
     }
 
@@ -163,16 +174,24 @@ public partial class App : Application
     {
         if (!_hotkeyService!.Register(binding))
         {
-            ShowHotkeyError();
+            ShowHotkeyError("record");
         }
     }
 
-    private static void ShowHotkeyError()
+    private void RegisterPauseHotkeyOrShowError(HotkeyBinding binding)
+    {
+        if (!_hotkeyService!.RegisterPause(binding))
+        {
+            ShowHotkeyError("pause");
+        }
+    }
+
+    private static void ShowHotkeyError(string action = "record")
     {
         var err = Marshal.GetLastWin32Error();
         var msg = err == 1409
-            ? "That hotkey is already in use by another app."
-            : $"Failed to register hotkey (error {err}).";
+            ? $"The {action} hotkey is already in use by another app."
+            : $"Failed to register {action} hotkey (error {err}).";
         MessageBox.Show(msg, "Shutter — Hotkey Error", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 

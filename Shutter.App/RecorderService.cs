@@ -12,6 +12,8 @@ public class RecorderService : IRecorderService, IDisposable
     private WasapiCapture? _capture;
     private WaveFileWriter? _writer;
     private string? _tempPath;
+    // Volatile: written by the UI/controller thread, read by the audio callback thread.
+    private volatile bool _isPaused;
 
     public string? LastSavedPath { get; private set; }
 
@@ -44,6 +46,9 @@ public class RecorderService : IRecorderService, IDisposable
         _writer = new WaveFileWriter(_tempPath, _capture.WaveFormat);
         _capture.DataAvailable += (s, e) =>
         {
+            // Discard buffers while paused — keeps WASAPI running for instant resume
+            // and avoids false silence accumulation in the RMS sum.
+            if (_isPaused) return;
             _writer.Write(e.Buffer, 0, e.BytesRecorded);
             var rms = CalculateRms(e.Buffer, e.BytesRecorded);
             LevelAvailable?.Invoke(rms);
@@ -52,8 +57,13 @@ public class RecorderService : IRecorderService, IDisposable
         _capture.StartRecording();
     }
 
+    public void Pause() => _isPaused = true;
+
+    public void Resume() => _isPaused = false;
+
     public void Stop()
     {
+        _isPaused = false; // reset in case we stopped while paused
         _capture?.StopRecording();
         _writer?.Dispose();
         _writer = null;

@@ -334,7 +334,18 @@ public partial class App : Application
             return;
         }
 
+<<<<<<< ours
         var window = new MainWindow(_hotkeyService.Binding, _recorderService.GetInputDevices(), _recorderService.SelectedDeviceId, _settings.Stealth);
+=======
+        var window = new MainWindow(
+            _hotkeyService.Binding,
+            _recorderService.GetInputDevices(),
+            _recorderService.SelectedDeviceId,
+            _settings.OutputFormat,
+            _settings.Quality,
+            _settings.Stealth.Preset,
+            _settings.Stealth.FilenameStyle);
+>>>>>>> theirs
         if (window.ShowDialog() != true)
         {
             return;
@@ -361,7 +372,14 @@ public partial class App : Application
         
         _recorderService.SelectedDeviceId = window.SelectedDeviceId;
         _settings.InputDeviceId = window.SelectedDeviceId;
+<<<<<<< ours
         _settings.Stealth = window.StealthConfig;
+=======
+        _settings.OutputFormat = window.SelectedOutputFormat;
+        _settings.Quality = window.SelectedQuality;
+        _settings.Stealth.FilenameStyle = window.SelectedFilenameStyle;
+        ApplyStealthPreset(window.SelectedStealthPreset, isStartup: false);
+>>>>>>> theirs
         _settings.Save();
 
         // Also we must reinitialize the eventbus if stealth config changed
@@ -581,6 +599,7 @@ public partial class App : Application
         base.OnExit(e);
     }
 
+<<<<<<< ours
     private void InitializeEventBusSubscriptions()
     {
         if (_eventBus == null || _notifications == null || _overlay == null) return;
@@ -635,6 +654,8 @@ public partial class App : Application
         });
     }
 
+=======
+>>>>>>> theirs
     [StructLayout(LayoutKind.Sequential)]
     private struct FLASHWINFO
     {

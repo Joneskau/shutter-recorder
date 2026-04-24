@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "UpUr/e8TF5g=",
+  "dgSpecHash": "iCm29uXqi58=",
   "success": true,
   "projectFilePath": "C:\\Users\\jones\\Desktop\\Shutter\\Shutter.App\\Shutter.App.csproj",
   "expectedPackageFiles": [
@@ -18,6 +18,17 @@
     "C:\\Users\\jones\\.nuget\\packages\\naudio.wasapi\\2.2.1\\naudio.wasapi.2.2.1.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\naudio.winforms\\2.2.1\\naudio.winforms.2.2.1.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\naudio.winmm\\2.2.1\\naudio.winmm.2.2.1.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x86\\10.0.7\\microsoft.netcore.app.runtime.win-x86.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\10.0.7\\microsoft.netcore.app.runtime.win-x64.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.netcore.app.runtime.win-arm64\\10.0.7\\microsoft.netcore.app.runtime.win-arm64.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x86\\10.0.7\\microsoft.windowsdesktop.app.runtime.win-x86.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\10.0.7\\microsoft.windowsdesktop.app.runtime.win-x64.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-arm64\\10.0.7\\microsoft.windowsdesktop.app.runtime.win-arm64.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x86\\10.0.7\\microsoft.aspnetcore.app.runtime.win-x86.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\10.0.7\\microsoft.aspnetcore.app.runtime.win-x64.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-arm64\\10.0.7\\microsoft.aspnetcore.app.runtime.win-arm64.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.netcore.app.host.win-x86\\10.0.7\\microsoft.netcore.app.host.win-x86.10.0.7.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.netcore.app.host.win-arm64\\10.0.7\\microsoft.netcore.app.host.win-arm64.10.0.7.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.57\\microsoft.windows.sdk.net.ref.10.0.19041.57.nupkg.sha512"
   ],
   "logs": []

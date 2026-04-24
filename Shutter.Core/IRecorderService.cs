@@ -4,6 +4,7 @@ namespace Shutter.Core;
 
 public interface IRecorderService
 {
-    void Start(string filePath);
+    string? LastSavedPath { get; }
+    void Start(string outputFolder);
     void Stop();
 }

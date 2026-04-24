@@ -10,7 +10,6 @@ public class CaptureController
     private readonly IHotkeyService _hotkeyService;
     private readonly IRecorderService _recorderService;
     private RecorderState _state = RecorderState.Idle;
-    private string? _lastSavedPath;
 
     public RecorderState State => _state;
 
@@ -44,11 +43,9 @@ public class CaptureController
         {
             _state = RecorderState.Starting;
             
-            var fileName = $"capture_{DateTime.Now:yyyyMMdd_HHmmss}.wav";
-            var filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), fileName);
-            _lastSavedPath = filePath;
-
-            _recorderService.Start(filePath);
+            var outputFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+            _recorderService.Start(outputFolder);
+            
             _state = RecorderState.Recording;
         }
         catch (Exception ex)
@@ -68,9 +65,10 @@ public class CaptureController
             _recorderService.Stop();
             _state = RecorderState.Idle;
             
-            if (_lastSavedPath != null)
+            var path = _recorderService.LastSavedPath;
+            if (path != null)
             {
-                RecordingFinished?.Invoke(this, _lastSavedPath);
+                RecordingFinished?.Invoke(this, path);
             }
         }
         catch (Exception ex)

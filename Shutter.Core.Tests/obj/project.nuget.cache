@@ -1,11 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "o5IK6go8WLk=",
-  "success": true,
+  "dgSpecHash": "eZhsFKqG0VM=",
+  "success": false,
   "projectFilePath": "C:\\Users\\jones\\Desktop\\Shutter\\Shutter.Core.Tests\\Shutter.Core.Tests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\jones\\.nuget\\packages\\castle.core\\5.1.1\\castle.core.5.1.1.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\communitytoolkit.winui.notifications\\7.0.3\\communitytoolkit.winui.notifications.7.0.3.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\concentus\\2.1.0\\concentus.2.1.0.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\concentus.oggfile\\1.0.5\\concentus.oggfile.1.0.5.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\coverlet.collector\\6.0.4\\coverlet.collector.6.0.4.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\hardcodet.notifyicon.wpf\\2.0.1\\hardcodet.notifyicon.wpf.2.0.1.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\microsoft.codecoverage\\17.14.1\\microsoft.codecoverage.17.14.1.nupkg.sha512",
@@ -19,6 +21,7 @@
     "C:\\Users\\jones\\.nuget\\packages\\naudio\\2.2.1\\naudio.2.2.1.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\naudio.asio\\2.2.1\\naudio.asio.2.2.1.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\naudio.core\\2.2.1\\naudio.core.2.2.1.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\naudio.lame\\2.1.0\\naudio.lame.2.1.0.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\naudio.midi\\2.2.1\\naudio.midi.2.2.1.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\naudio.wasapi\\2.2.1\\naudio.wasapi.2.2.1.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\naudio.winforms\\2.2.1\\naudio.winforms.2.2.1.nupkg.sha512",
@@ -35,5 +38,29 @@
     "C:\\Users\\jones\\.nuget\\packages\\xunit.runner.visualstudio\\3.1.4\\xunit.runner.visualstudio.3.1.4.nupkg.sha512",
     "C:\\Users\\jones\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.57\\microsoft.windows.sdk.net.ref.10.0.19041.57.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "message": "Shutter.Core.Tests depends on Concentus (>= 2.0.5) but Concentus 2.0.5 was not found. Concentus 2.1.0 was resolved instead.",
+      "projectPath": "C:\\Users\\jones\\Desktop\\Shutter\\Shutter.Core.Tests\\Shutter.Core.Tests.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\jones\\Desktop\\Shutter\\Shutter.Core.Tests\\Shutter.Core.Tests.csproj",
+      "libraryId": "Concentus",
+      "targetGraphs": [
+        "net10.0-windows10.0.19041"
+      ]
+    },
+    {
+      "code": "NU1109",
+      "level": "Error",
+      "message": "Detected package downgrade: Concentus from 2.2.1 to centrally defined 2.1.0. Update the centrally managed package version to a higher version. \r\n Shutter.Core.Tests -> Concentus.Oggfile 1.0.5 -> Concentus (>= 2.2.1) \r\n Shutter.Core.Tests -> Concentus (>= 2.0.5)",
+      "projectPath": "C:\\Users\\jones\\Desktop\\Shutter\\Shutter.Core.Tests\\Shutter.Core.Tests.csproj",
+      "filePath": "C:\\Users\\jones\\Desktop\\Shutter\\Shutter.Core.Tests\\Shutter.Core.Tests.csproj",
+      "libraryId": "Concentus",
+      "targetGraphs": [
+        "net10.0-windows10.0.19041"
+      ]
+    }
+  ]
 }

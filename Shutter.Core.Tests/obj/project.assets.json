@@ -28,6 +28,41 @@
           }
         }
       },
+      "Concentus/2.1.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/Concentus.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Concentus.dll": {
+            "related": ".xml"
+          }
+        },
+        "contentFiles": {
+          "contentFiles/any/any/_._": {
+            "buildAction": "None",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          }
+        },
+        "build": {
+          "buildTransitive/Concentus.targets": {}
+        }
+      },
+      "Concentus.Oggfile/1.0.5": {
+        "type": "package",
+        "dependencies": {
+          "Concentus": "2.2.1"
+        },
+        "compile": {
+          "lib/net8.0/Concentus.Oggfile.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0/Concentus.Oggfile.dll": {}
+        }
+      },
       "coverlet.collector/6.0.4": {
         "type": "package",
         "build": {
@@ -419,6 +454,25 @@
           }
         }
       },
+      "NAudio.Lame/2.1.0": {
+        "type": "package",
+        "dependencies": {
+          "NAudio.Core": "2.1.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/NAudio.Lame.dll": {
+            "related": ".pdb"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/NAudio.Lame.dll": {
+            "related": ".pdb"
+          }
+        },
+        "build": {
+          "build/_._": {}
+        }
+      },
       "NAudio.Midi/2.2.1": {
         "type": "package",
         "dependencies": {
@@ -616,9 +670,12 @@
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
           "CommunityToolkit.WinUI.Notifications": "7.0.3",
+          "Concentus": "2.0.5",
+          "Concentus.OggFile": "1.0.5",
           "Hardcodet.NotifyIcon.Wpf": "2.0.1",
           "Microsoft.Windows.CsWin32": "0.3.106",
           "NAudio": "2.2.1",
+          "NAudio.Lame": "2.1.0",
           "Shutter.Core": "1.0.0"
         },
         "compile": {
@@ -707,6 +764,63 @@
         "lib/uap10.0.16299/CommunityToolkit.WinUI.Notifications.pdb",
         "lib/uap10.0.16299/CommunityToolkit.WinUI.Notifications.pri",
         "lib/uap10.0.16299/CommunityToolkit.WinUI.Notifications.xml"
+      ]
+    },
+    "Concentus/2.1.0": {
+      "sha512": "cwPJtdwkneaAJAOE0gxehlBie0wBZwIEwyWboTJVa07nYTecxWo17sK9F1qIDsYYt+0jv87WS6cnnHJK71R1ag==",
+      "type": "package",
+      "path": "concentus/2.1.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "build/Concentus.targets",
+        "buildTransitive/Concentus.targets",
+        "concentus.2.1.0.nupkg.sha512",
+        "concentus.nuspec",
+        "content/runtimes/linux-armv6/native/libopus.so",
+        "content/runtimes/linux-x64/native/libopus.so",
+        "content/runtimes/osx-x64/native/libopus.dylib",
+        "content/runtimes/win-x64/native/opus.dll",
+        "content/runtimes/win-x86/native/opus.dll",
+        "contentFiles/any/net8.0/runtimes/linux-armv6/native/libopus.so",
+        "contentFiles/any/net8.0/runtimes/linux-x64/native/libopus.so",
+        "contentFiles/any/net8.0/runtimes/osx-x64/native/libopus.dylib",
+        "contentFiles/any/net8.0/runtimes/win-x64/native/opus.dll",
+        "contentFiles/any/net8.0/runtimes/win-x86/native/opus.dll",
+        "contentFiles/any/netstandard1.1/runtimes/linux-armv6/native/libopus.so",
+        "contentFiles/any/netstandard1.1/runtimes/linux-x64/native/libopus.so",
+        "contentFiles/any/netstandard1.1/runtimes/osx-x64/native/libopus.dylib",
+        "contentFiles/any/netstandard1.1/runtimes/win-x64/native/opus.dll",
+        "contentFiles/any/netstandard1.1/runtimes/win-x86/native/opus.dll",
+        "contentFiles/any/netstandard2.0/runtimes/linux-armv6/native/libopus.so",
+        "contentFiles/any/netstandard2.0/runtimes/linux-x64/native/libopus.so",
+        "contentFiles/any/netstandard2.0/runtimes/osx-x64/native/libopus.dylib",
+        "contentFiles/any/netstandard2.0/runtimes/win-x64/native/opus.dll",
+        "contentFiles/any/netstandard2.0/runtimes/win-x86/native/opus.dll",
+        "icon.png",
+        "lib/net8.0/Concentus.dll",
+        "lib/net8.0/Concentus.xml",
+        "lib/netstandard1.1/Concentus.dll",
+        "lib/netstandard1.1/Concentus.xml",
+        "lib/netstandard2.0/Concentus.dll",
+        "lib/netstandard2.0/Concentus.xml"
+      ]
+    },
+    "Concentus.Oggfile/1.0.5": {
+      "sha512": "rpWCeKv2qyfTjXHgeMJoTaphJtBaEZIl+vqsWkLjFgpje0swznVdvb93vCMBHzJg4VadyJX8tq4GXYaTiBd3Dw==",
+      "type": "package",
+      "path": "concentus.oggfile/1.0.5",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "concentus.oggfile.1.0.5.nupkg.sha512",
+        "concentus.oggfile.nuspec",
+        "icon.png",
+        "lib/net452/Concentus.Oggfile.dll",
+        "lib/net8.0/Concentus.Oggfile.dll",
+        "lib/netstandard1.1/Concentus.Oggfile.dll",
+        "lib/netstandard2.0/Concentus.Oggfile.dll"
       ]
     },
     "coverlet.collector/6.0.4": {
@@ -1201,6 +1315,23 @@
         "naudio.core.nuspec"
       ]
     },
+    "NAudio.Lame/2.1.0": {
+      "sha512": "Y+FtVgvjT+bNpBFqDiAKcFGelix1UavpX66vLymzWalXOGvY+MsoLNKL6aNGA0INjvBxeI3qd1LlD+bg7Nv2Ww==",
+      "type": "package",
+      "path": "naudio.lame/2.1.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.txt",
+        "build/NAudio.Lame.targets",
+        "build/libmp3lame.32.dll",
+        "build/libmp3lame.64.dll",
+        "lib/netstandard2.0/NAudio.Lame.dll",
+        "lib/netstandard2.0/NAudio.Lame.pdb",
+        "naudio.lame.2.1.0.nupkg.sha512",
+        "naudio.lame.nuspec"
+      ]
+    },
     "NAudio.Midi/2.2.1": {
       "sha512": "6r23ylGo5aeP02WFXsPquz0T0hFJWyh+7t++tz19tc3Kr38NHm+Z9j+FiAv+xkH8tZqXJqus9Q8p6u7bidIgbw==",
       "type": "package",
@@ -1553,12 +1684,15 @@
         },
         "centralPackageVersions": {
           "CommunityToolkit.WinUI.Notifications": "7.0.3",
+          "Concentus": "2.0.5",
+          "Concentus.OggFile": "1.0.5",
           "coverlet.collector": "6.0.4",
           "Hardcodet.NotifyIcon.Wpf": "2.0.1",
           "Microsoft.NET.Test.Sdk": "17.14.1",
           "Microsoft.Windows.CsWin32": "0.3.106",
           "Microsoft.WindowsAppSDK": "1.6.250205002",
           "NAudio": "2.2.1",
+          "NAudio.Lame": "2.1.0",
           "NSubstitute": "5.3.0",
           "System.Text.Encodings.Web": "10.0.0",
           "System.Text.Json": "10.0.0",
@@ -1887,11 +2021,40 @@
       }
     }
   },
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Shutter.Core.Tests depends on Concentus (>= 2.0.5) but Concentus 2.0.5 was not found. Concentus 2.1.0 was resolved instead.",
+      "libraryId": "Concentus",
+      "targetGraphs": [
+        "net10.0-windows10.0.19041"
+      ]
+    },
+    {
+      "code": "NU1109",
+      "level": "Error",
+      "message": "Detected package downgrade: Concentus from 2.2.1 to centrally defined 2.1.0. Update the centrally managed package version to a higher version. \r\n Shutter.Core.Tests -> Concentus.Oggfile 1.0.5 -> Concentus (>= 2.2.1) \r\n Shutter.Core.Tests -> Concentus (>= 2.0.5)",
+      "libraryId": "Concentus",
+      "targetGraphs": [
+        "net10.0-windows10.0.19041"
+      ]
+    }
+  ],
   "centralTransitiveDependencyGroups": {
     "net10.0-windows10.0.19041": {
       "CommunityToolkit.WinUI.Notifications": {
         "include": "Runtime, Compile, Native, BuildTransitive",
         "version": "[7.0.3, )"
+      },
+      "Concentus": {
+        "include": "Runtime, Compile, Native, BuildTransitive",
+        "version": "[2.0.5, )"
+      },
+      "Concentus.OggFile": {
+        "include": "Runtime, Compile, Native, BuildTransitive",
+        "version": "[1.0.5, )"
       },
       "Hardcodet.NotifyIcon.Wpf": {
         "include": "Runtime, Compile, Native, BuildTransitive",
@@ -1904,6 +2067,10 @@
       "NAudio": {
         "include": "Runtime, Compile, Native, BuildTransitive",
         "version": "[2.2.1, )"
+      },
+      "NAudio.Lame": {
+        "include": "Runtime, Compile, Native, BuildTransitive",
+        "version": "[2.1.0, )"
       }
     }
   }

@@ -56,6 +56,16 @@
               "version": "[7.0.3, )",
               "versionCentrallyManaged": true
             },
+            "Concentus": {
+              "target": "Package",
+              "version": "[2.0.5, )",
+              "versionCentrallyManaged": true
+            },
+            "Concentus.OggFile": {
+              "target": "Package",
+              "version": "[1.0.5, )",
+              "versionCentrallyManaged": true
+            },
             "Hardcodet.NotifyIcon.Wpf": {
               "target": "Package",
               "version": "[2.0.1, )",
@@ -70,16 +80,24 @@
               "target": "Package",
               "version": "[2.2.1, )",
               "versionCentrallyManaged": true
+            },
+            "NAudio.Lame": {
+              "target": "Package",
+              "version": "[2.1.0, )",
+              "versionCentrallyManaged": true
             }
           },
           "centralPackageVersions": {
             "CommunityToolkit.WinUI.Notifications": "7.0.3",
+            "Concentus": "2.0.5",
+            "Concentus.OggFile": "1.0.5",
             "coverlet.collector": "6.0.4",
             "Hardcodet.NotifyIcon.Wpf": "2.0.1",
             "Microsoft.NET.Test.Sdk": "17.14.1",
             "Microsoft.Windows.CsWin32": "0.3.106",
             "Microsoft.WindowsAppSDK": "1.6.250205002",
             "NAudio": "2.2.1",
+            "NAudio.Lame": "2.1.0",
             "NSubstitute": "5.3.0",
             "System.Text.Encodings.Web": "10.0.0",
             "System.Text.Json": "10.0.0",
@@ -452,12 +470,15 @@
           "targetAlias": "net10.0",
           "centralPackageVersions": {
             "CommunityToolkit.WinUI.Notifications": "7.0.3",
+            "Concentus": "2.0.5",
+            "Concentus.OggFile": "1.0.5",
             "coverlet.collector": "6.0.4",
             "Hardcodet.NotifyIcon.Wpf": "2.0.1",
             "Microsoft.NET.Test.Sdk": "17.14.1",
             "Microsoft.Windows.CsWin32": "0.3.106",
             "Microsoft.WindowsAppSDK": "1.6.250205002",
             "NAudio": "2.2.1",
+            "NAudio.Lame": "2.1.0",
             "NSubstitute": "5.3.0",
             "System.Text.Encodings.Web": "10.0.0",
             "System.Text.Json": "10.0.0",

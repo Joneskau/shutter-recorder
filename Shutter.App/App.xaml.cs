@@ -112,19 +112,80 @@ public partial class App : Application
             {
                 _recorderService.Stop();
                 _overlay.StopRecording();
-                var path = _recorderService.LastSavedPath!;
-                Clipboard.SetText(path);
-                _notifications?.ShowSaved(path);
+                var wavPath = _recorderService.LastSavedPath!;
+                Clipboard.SetText(wavPath);
                 
+                var format = _settings!.OutputFormat?.ToLowerInvariant() ?? "wav";
+                var qualityStr = _settings.Quality?.ToLowerInvariant() ?? "standard";
+                var quality = qualityStr switch {
+                    "low" => QualityPreset.Low,
+                    "high" => QualityPreset.High,
+                    _ => QualityPreset.Standard
+                };
+                
+                if (format != "wav" && format != "mp3" && format != "opus") {
+                    _notifications?.ShowError($"Unknown format '{format}', saving as WAV.");
+                    format = "wav";
+                }
+                if (qualityStr != "low" && qualityStr != "standard" && qualityStr != "high") {
+                    _notifications?.ShowError($"Unknown quality '{qualityStr}', using standard.");
+                    quality = QualityPreset.Standard;
+                }
+                
+                IEncoder encoder = format switch {
+                    "mp3" => new Mp3Encoder(),
+                    "opus" => new OpusEncoder(),
+                    _ => new WavPassthroughEncoder()
+                };
+
                 var entry = new RecordingEntry(
-                    Path.GetFileName(path),
-                    path,
+                    Path.GetFileName(wavPath),
+                    wavPath,
                     _recorderService.LastSavedDuration,
                     _recorderService.LastSavedSizeBytes,
                     DateTimeOffset.Now,
                     _recorderService.LastSavedWasSilent
                 );
                 _historyService?.Add(entry);
+
+                if (encoder is WavPassthroughEncoder && quality == QualityPreset.Standard)
+                {
+                    _notifications?.ShowSaved(wavPath);
+                    return;
+                }
+
+                var targetExt = format switch {
+                    "mp3" => ".mp3",
+                    "opus" => ".ogg",
+                    _ => ".wav"
+                };
+                var finalPath = Path.ChangeExtension(wavPath, targetExt);
+
+                System.Threading.Tasks.Task.Run(async () => {
+                    try {
+                        var encodedPath = await encoder.EncodeAsync(wavPath, finalPath, quality);
+                        Application.Current.Dispatcher.Invoke(() => {
+                            Clipboard.SetText(encodedPath);
+                            _notifications?.ShowSaved(encodedPath);
+                            
+                            var fileInfo = new FileInfo(encodedPath);
+                            var updatedEntry = entry with {
+                                Path = encodedPath,
+                                FileName = Path.GetFileName(encodedPath),
+                                SizeBytes = fileInfo.Length
+                            };
+                            _historyService?.Update(entry, updatedEntry);
+                            
+                            if (wavPath != encodedPath && File.Exists(wavPath)) {
+                                File.Delete(wavPath);
+                            }
+                        });
+                    } catch (Exception) {
+                        Application.Current.Dispatcher.Invoke(() => {
+                            _notifications?.ShowError($"Encoding failed — saved as WAV instead.");
+                        });
+                    }
+                });
             },
             pauseRecording: () =>
             {

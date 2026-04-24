@@ -12,6 +12,9 @@ public sealed class AppSettings
     public bool HotkeyShift { get; set; } = true;
     public bool HotkeyWin { get; set; } = true;
 
+    public string OutputFormat { get; set; } = "wav";
+    public string Quality { get; set; } = "standard";
+
     // Pause/resume hotkey — defaults to Ctrl+Alt+P
     public string PauseHotkeyKey { get; set; } = "P";
     public bool PauseHotkeyCtrl { get; set; } = true;

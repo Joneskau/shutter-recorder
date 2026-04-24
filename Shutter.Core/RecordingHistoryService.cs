@@ -39,6 +39,16 @@ public class RecordingHistoryService : IRecordingHistoryService
         }
     }
 
+    public void Update(RecordingEntry oldEntry, RecordingEntry newEntry)
+    {
+        var index = Entries.IndexOf(oldEntry);
+        if (index >= 0)
+        {
+            Entries[index] = newEntry;
+            SaveHistory();
+        }
+    }
+
     private RecordingEntry[] LoadHistory()
     {
         if (!File.Exists(_historyFilePath))

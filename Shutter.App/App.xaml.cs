@@ -16,6 +16,8 @@ public partial class App : Application
     private CaptureController? _controller;
     private OverlayWindow? _overlay;
     private NotificationService? _notifications;
+    private RecordingHistoryService? _historyService;
+    private HistoryWindow? _historyWindow;
     private TaskbarIcon? _trayIcon;
     private AppSettings? _settings;
 
@@ -33,6 +35,21 @@ public partial class App : Application
         _hotkeyService = new HotkeyService();
         _overlay = new OverlayWindow();
         _notifications = new NotificationService();
+        
+        var historyPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ShutterRecorder", "history.json");
+        _historyService = new RecordingHistoryService(historyPath);
+
+        _historyWindow = new HistoryWindow(_historyService);
+        if (_settings.HistoryLeft.HasValue && _settings.HistoryTop.HasValue)
+        {
+            _historyWindow.Left = _settings.HistoryLeft.Value;
+            _historyWindow.Top = _settings.HistoryTop.Value;
+        }
+        _historyWindow.PositionChanged += point =>
+        {
+            _settings.SetHistoryPosition(point);
+            _settings.Save();
+        };
 
         _overlay.SetPosition(_settings.OverlayPosition);
         _overlay.PositionChanged += point =>
@@ -57,6 +74,16 @@ public partial class App : Application
                 var path = _recorderService.LastSavedPath!;
                 Clipboard.SetText(path);
                 _notifications?.ShowSaved(path);
+                
+                var entry = new RecordingEntry(
+                    Path.GetFileName(path),
+                    path,
+                    _recorderService.LastSavedDuration,
+                    _recorderService.LastSavedSizeBytes,
+                    DateTimeOffset.Now,
+                    _recorderService.LastSavedWasSilent
+                );
+                _historyService?.Add(entry);
             },
             pauseRecording: () =>
             {
@@ -93,6 +120,18 @@ public partial class App : Application
     private ContextMenu BuildTrayMenu()
     {
         var menu = new ContextMenu();
+
+        var historyItem = new MenuItem { Header = "Recording History" };
+        historyItem.Click += (_, _) =>
+        {
+            if (_historyWindow != null)
+            {
+                _historyWindow.Show();
+                _historyWindow.Activate();
+            }
+        };
+        menu.Items.Add(historyItem);
+        menu.Items.Add(new Separator());
 
         var settingsItem = new MenuItem { Header = "Settings..." };
         settingsItem.Click += (_, _) => OpenSettings();
@@ -201,6 +240,13 @@ public partial class App : Application
         _notifications?.Dispose();
         _hotkeyService?.Unregister();
         _recorderService?.Dispose();
+        
+        if (_historyWindow != null)
+        {
+            _historyWindow.PositionChanged -= null; // detach logic if necessary
+            _historyWindow.Close();
+        }
+
         base.OnExit(e);
     }
 }

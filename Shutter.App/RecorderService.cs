@@ -14,8 +14,14 @@ public class RecorderService : IRecorderService, IDisposable
     private string? _tempPath;
     // Volatile: written by the UI/controller thread, read by the audio callback thread.
     private volatile bool _isPaused;
+    
+    private double _rmsSum;
+    private int _rmsCount;
 
     public string? LastSavedPath { get; private set; }
+    public TimeSpan LastSavedDuration { get; private set; }
+    public long LastSavedSizeBytes { get; private set; }
+    public bool LastSavedWasSilent { get; private set; }
 
     public event Action<float>? LevelAvailable;
 
@@ -40,6 +46,9 @@ public class RecorderService : IRecorderService, IDisposable
         var device = ResolveSelectedDevice();
         _capture = device is null ? new WasapiCapture() : new WasapiCapture(device);
 
+        _rmsSum = 0;
+        _rmsCount = 0;
+
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         _tempPath = Path.Combine(outputFolder, $"{timestamp}.wav.tmp");
 
@@ -51,6 +60,8 @@ public class RecorderService : IRecorderService, IDisposable
             if (_isPaused) return;
             _writer.Write(e.Buffer, 0, e.BytesRecorded);
             var rms = CalculateRms(e.Buffer, e.BytesRecorded);
+            _rmsSum += rms;
+            _rmsCount++;
             LevelAvailable?.Invoke(rms);
         };
 
@@ -64,6 +75,11 @@ public class RecorderService : IRecorderService, IDisposable
     public void Stop()
     {
         _isPaused = false; // reset in case we stopped while paused
+        LastSavedDuration = _writer?.TotalTime ?? TimeSpan.Zero;
+        
+        // Very basic silence detection threshold (e.g. 0.005)
+        LastSavedWasSilent = _rmsCount > 0 && (_rmsSum / _rmsCount) < 0.005;
+
         _capture?.StopRecording();
         _writer?.Dispose();
         _writer = null;
@@ -74,6 +90,7 @@ public class RecorderService : IRecorderService, IDisposable
         var finalPath = Path.ChangeExtension(_tempPath, null);
         File.Move(_tempPath, finalPath, overwrite: true);
         LastSavedPath = finalPath;
+        LastSavedSizeBytes = new FileInfo(finalPath).Length;
         _tempPath = null;
     }
 

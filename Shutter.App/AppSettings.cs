@@ -21,6 +21,10 @@ public sealed class AppSettings
 
     public double OverlayLeft { get; set; } = 600;
     public double OverlayTop { get; set; } = 20;
+    
+    public double? HistoryLeft { get; set; }
+    public double? HistoryTop { get; set; }
+
     public string? InputDeviceId { get; set; }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -113,5 +117,11 @@ public sealed class AppSettings
     {
         OverlayLeft = point.X;
         OverlayTop = point.Y;
+    }
+
+    public void SetHistoryPosition(Point point)
+    {
+        HistoryLeft = point.X;
+        HistoryTop = point.Y;
     }
 }

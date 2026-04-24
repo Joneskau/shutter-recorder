@@ -2,8 +2,26 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using Shutter.Core;
+using System.Collections.Generic;
 
 namespace Shutter.App;
+
+public class StealthSettings : IStealthConfig
+{
+    public string Preset { get; set; } = "off";
+    public string RuntimeToggleHotkey { get; set; } = "Ctrl+Alt+Shift+S";
+    public string QuitHotkey { get; set; } = "Ctrl+Alt+Q";
+    public int AliveReminderAfterMinutes { get; set; } = 120;
+    public string AliveReminderStyle { get; set; } = "taskbar-flash";
+    public string FilenameStyle { get; set; } = "timestamp";
+    public bool AutoHideOnScreenShare { get; set; } = false;
+    public bool AuditLog { get; set; } = true;
+    public List<string> SuppressOnSuccess { get; set; } = new List<string> { "widget", "savedToast", "trayIcon" };
+    public List<string> NeverSuppress { get; set; } = new List<string> { "errorToast", "silenceWarning", "micFailure", "hotkeyCollision", "recordingFailed" };
+
+    IReadOnlyList<string> IStealthConfig.SuppressOnSuccess => SuppressOnSuccess;
+    IReadOnlyList<string> IStealthConfig.NeverSuppress => NeverSuppress;
+}
 
 public sealed class AppSettings
 {
@@ -39,6 +57,8 @@ public sealed class AppSettings
     public double? HistoryTop { get; set; }
 
     public string? InputDeviceId { get; set; }
+
+    public StealthSettings Stealth { get; set; } = new();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

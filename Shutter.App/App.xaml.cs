@@ -21,6 +21,7 @@ public partial class App : Application
     private HistoryWindow? _historyWindow;
     private TaskbarIcon? _trayIcon;
     private AppSettings? _settings;
+    private EventBus? _eventBus;
 
     private static readonly string OutputFolder =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Recordings");
@@ -94,6 +95,57 @@ public partial class App : Application
 
         _recorderService.LevelAvailable += level => _overlay?.UpdateLevel(level);
 
+        _eventBus = new EventBus(_settings.Stealth);
+
+        _eventBus.Subscribe<MicNotFoundEvent>("errorToast", _ =>
+        {
+            _notifications.ShowError("No microphone detected.");
+        });
+
+        _eventBus.Subscribe<RecordingStartedEvent>("widget", e =>
+        {
+            _overlay.StartRecording(e.IsPushToTalk);
+        });
+
+        _eventBus.Subscribe<RecordingSavedEvent>("savedToast", e =>
+        {
+            _notifications.ShowSaved(e.FilePath);
+        });
+
+        _eventBus.Subscribe<RecordingFailedEvent>("errorToast", e =>
+        {
+            _notifications.ShowError(e.Reason);
+        });
+
+        _eventBus.Subscribe<SilenceDetectedEvent>("silenceWarning", _ =>
+        {
+            // The silence warning is an error toast indicating the recording was silent.
+            _notifications.ShowError("Recording was silent.");
+        });
+
+        _eventBus.Subscribe<ClipboardCopiedEvent>("clipboard", e =>
+        {
+            Clipboard.SetText(e.Text);
+        });
+
+        _eventBus.Subscribe<HotkeyCollisionEvent>("errorToast", e =>
+        {
+            var msg = e.Action == "1409"
+                ? "The hotkey is already in use by another app."
+                : $"Failed to register hotkey (error {e.Action}).";
+            MessageBox.Show(msg, "Shutter — Hotkey Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        });
+
+        _eventBus.Subscribe<RecordingSavedEvent>("widget", _ =>
+        {
+            _overlay.StopRecording();
+        });
+
+        _eventBus.Subscribe<RecordingFailedEvent>("widget", _ =>
+        {
+            _overlay.StopRecording();
+        });
+
         _controller = new CaptureController(
             _hotkeyService,
             startRecording: () =>
@@ -102,7 +154,7 @@ public partial class App : Application
                 var resolution = _deviceHealthService.ResolveDevice(_settings.InputDeviceId);
                 if (string.IsNullOrEmpty(resolution.DeviceId))
                 {
-                    _notifications.ShowError("No microphone detected.");
+                    _eventBus.Publish(new MicNotFoundEvent());
                     throw new InvalidOperationException("No input device available");
                 }
 
@@ -115,22 +167,21 @@ public partial class App : Application
                 _overlay.SetFallbackMode(resolution.IsFallback);
                 
                 _recorderService.Start(OutputFolder);
-                _overlay.StartRecording(_settings.RecordingMode == "pushToTalk");
+                _eventBus.Publish(new RecordingStartedEvent(_settings.RecordingMode == "pushToTalk"));
             },
             stopRecording: (save) =>
             {
                 _recorderService.Stop();
-                _overlay.StopRecording();
                 var wavPath = _recorderService.LastSavedPath!;
                 
                 if (!save)
                 {
                     if (File.Exists(wavPath)) File.Delete(wavPath);
-                    _notifications?.ShowError("Recording discarded (too short).");
+                    _eventBus.Publish(new RecordingFailedEvent("Recording discarded (too short)."));
                     return;
                 }
                 
-                Clipboard.SetText(wavPath);
+                _eventBus.Publish(new ClipboardCopiedEvent(wavPath));
                 
                 var format = _settings!.OutputFormat?.ToLowerInvariant() ?? "wav";
                 var qualityStr = _settings.Quality?.ToLowerInvariant() ?? "standard";
@@ -165,9 +216,14 @@ public partial class App : Application
                 );
                 _historyService?.Add(entry);
 
+                if (_recorderService.LastSavedWasSilent)
+                {
+                    _eventBus.Publish(new SilenceDetectedEvent());
+                }
+
                 if (encoder is WavPassthroughEncoder && quality == QualityPreset.Standard)
                 {
-                    _notifications?.ShowSaved(wavPath);
+                    _eventBus.Publish(new RecordingSavedEvent(wavPath));
                     return;
                 }
 
@@ -182,8 +238,8 @@ public partial class App : Application
                     try {
                         var encodedPath = await encoder.EncodeAsync(wavPath, finalPath, quality);
                         Application.Current.Dispatcher.Invoke(() => {
-                            Clipboard.SetText(encodedPath);
-                            _notifications?.ShowSaved(encodedPath);
+                            _eventBus.Publish(new ClipboardCopiedEvent(encodedPath));
+                            _eventBus.Publish(new RecordingSavedEvent(encodedPath));
                             
                             var fileInfo = new FileInfo(encodedPath);
                             var updatedEntry = entry with {
@@ -199,7 +255,7 @@ public partial class App : Application
                         });
                     } catch (Exception) {
                         Application.Current.Dispatcher.Invoke(() => {
-                            _notifications?.ShowError($"Encoding failed — saved as WAV instead.");
+                            _eventBus.Publish(new RecordingFailedEvent("Encoding failed — saved as WAV instead."));
                         });
                     }
                 });
@@ -355,13 +411,10 @@ public partial class App : Application
         }
     }
 
-    private static void ShowHotkeyError(string action = "record")
+    private void ShowHotkeyError(string action = "record")
     {
         var err = Marshal.GetLastWin32Error();
-        var msg = err == 1409
-            ? $"The {action} hotkey is already in use by another app."
-            : $"Failed to register {action} hotkey (error {err}).";
-        MessageBox.Show(msg, "Shutter — Hotkey Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        _eventBus?.Publish(new HotkeyCollisionEvent(err.ToString()));
     }
 
     protected override void OnExit(ExitEventArgs e)

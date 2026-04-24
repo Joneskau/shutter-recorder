@@ -61,6 +61,14 @@ public sealed class NotificationService : IDisposable
             .Show();
     }
 
+    public void ShowStealthEnabled(string toggleHotkey, string quitHotkey)
+    {
+        new ToastContentBuilder()
+            .AddText("Stealth mode on")
+            .AddText($"Toggle: {toggleHotkey} · Quit: {quitHotkey}")
+            .Show(toast => toast.ExpirationTime = DateTime.Now.AddMinutes(30));
+    }
+
     private static void OnToastActivated(ToastNotificationActivatedEventArgsCompat args)
     {
         var parsed = ToastArguments.Parse(args.Argument);

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Shutter.App/Shutter.App.csproj" />
+  <Project Path="Shutter.Core.Tests/Shutter.Core.Tests.csproj" />
+  <Project Path="Shutter.Core/Shutter.Core.csproj" />
+</Solution>

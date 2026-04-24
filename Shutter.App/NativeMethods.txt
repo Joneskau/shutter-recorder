@@ -1,0 +1,5 @@
+RegisterHotKey
+UnregisterHotKey
+HOT_KEY_MODIFIERS
+VIRTUAL_KEY
+HWND

@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "dgSpecHash": "UpUr/e8TF5g=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\jones\\Desktop\\Shutter\\Shutter.App\\Shutter.App.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.web.webview2\\1.0.2651.64\\microsoft.web.webview2.1.0.2651.64.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windows.cswin32\\0.3.106\\microsoft.windows.cswin32.0.3.106.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windows.sdk.buildtools\\10.0.22621.756\\microsoft.windows.sdk.buildtools.10.0.22621.756.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windows.sdk.win32docs\\0.1.42-alpha\\microsoft.windows.sdk.win32docs.0.1.42-alpha.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windows.sdk.win32metadata\\60.0.34-preview\\microsoft.windows.sdk.win32metadata.60.0.34-preview.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windows.wdk.win32metadata\\0.11.4-experimental\\microsoft.windows.wdk.win32metadata.0.11.4-experimental.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windowsappsdk\\1.6.250205002\\microsoft.windowsappsdk.1.6.250205002.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\naudio\\2.2.1\\naudio.2.2.1.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\naudio.asio\\2.2.1\\naudio.asio.2.2.1.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\naudio.core\\2.2.1\\naudio.core.2.2.1.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\naudio.midi\\2.2.1\\naudio.midi.2.2.1.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\naudio.wasapi\\2.2.1\\naudio.wasapi.2.2.1.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\naudio.winforms\\2.2.1\\naudio.winforms.2.2.1.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\naudio.winmm\\2.2.1\\naudio.winmm.2.2.1.nupkg.sha512",
+    "C:\\Users\\jones\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.57\\microsoft.windows.sdk.net.ref.10.0.19041.57.nupkg.sha512"
+  ],
+  "logs": []
+}

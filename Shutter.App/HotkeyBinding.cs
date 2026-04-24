@@ -23,7 +23,7 @@ public sealed class HotkeyBinding
         }
     }
 
-    public uint VirtualKey => (uint)KeyInterop.VirtualKeyFromKey(Enum.TryParse<Key>(Key, true, out var key) ? key : Key.R);
+    public uint VirtualKey => (uint)KeyInterop.VirtualKeyFromKey(Enum.TryParse<System.Windows.Input.Key>(Key, true, out var key) ? key : System.Windows.Input.Key.R);
 
     public override string ToString()
     {

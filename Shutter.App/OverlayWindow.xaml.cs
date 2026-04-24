@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace Shutter.App;
@@ -8,6 +9,8 @@ public partial class OverlayWindow : Window
 {
     private readonly DispatcherTimer _timer = new();
     private DateTime _startTime;
+
+    public event Action<Point>? PositionChanged;
 
     public OverlayWindow()
     {
@@ -18,6 +21,12 @@ public partial class OverlayWindow : Window
             var elapsed = DateTime.Now - _startTime;
             ElapsedText.Text = elapsed.ToString(@"mm\:ss");
         };
+    }
+
+    public void SetPosition(Point point)
+    {
+        Left = point.X;
+        Top = point.Y;
     }
 
     public void StartRecording()
@@ -37,7 +46,17 @@ public partial class OverlayWindow : Window
 
     public void UpdateLevel(float rms)
     {
-        // rms is 0.0–1.0; scale to 0–100 for the progress bar
         Dispatcher.InvokeAsync(() => LevelBar.Value = rms * 100);
+    }
+
+    private void OnDragStart(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed)
+        {
+            return;
+        }
+
+        DragMove();
+        PositionChanged?.Invoke(new Point(Left, Top));
     }
 }

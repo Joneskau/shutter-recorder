@@ -1,7 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using NAudio.Wave;
 using NAudio.CoreAudioApi;
+using NAudio.Wave;
 using Shutter.Core;
 
 namespace Shutter.App;
@@ -16,9 +17,27 @@ public class RecorderService : IRecorderService, IDisposable
 
     public event Action<float>? LevelAvailable;
 
+    public string? SelectedDeviceId { get; set; }
+
+    public IReadOnlyList<InputDeviceOption> GetInputDevices()
+    {
+        using var enumerator = new MMDeviceEnumerator();
+        var devices = enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
+        var items = new List<InputDeviceOption>();
+
+        foreach (var device in devices)
+        {
+            items.Add(new InputDeviceOption(device.ID, device.FriendlyName));
+        }
+
+        return items;
+    }
+
     public void Start(string outputFolder)
     {
-        _capture = new WasapiCapture();
+        var device = ResolveSelectedDevice();
+        _capture = device is null ? new WasapiCapture() : new WasapiCapture(device);
+
         var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         _tempPath = Path.Combine(outputFolder, $"{timestamp}.wav.tmp");
 
@@ -26,7 +45,7 @@ public class RecorderService : IRecorderService, IDisposable
         _capture.DataAvailable += (s, e) =>
         {
             _writer.Write(e.Buffer, 0, e.BytesRecorded);
-            float rms = CalculateRms(e.Buffer, e.BytesRecorded);
+            var rms = CalculateRms(e.Buffer, e.BytesRecorded);
             LevelAvailable?.Invoke(rms);
         };
 
@@ -42,7 +61,7 @@ public class RecorderService : IRecorderService, IDisposable
         _capture = null;
 
         if (_tempPath == null) return;
-        var finalPath = Path.ChangeExtension(_tempPath, null); // removes .tmp
+        var finalPath = Path.ChangeExtension(_tempPath, null);
         File.Move(_tempPath, finalPath, overwrite: true);
         LastSavedPath = finalPath;
         _tempPath = null;
@@ -54,15 +73,41 @@ public class RecorderService : IRecorderService, IDisposable
         _capture?.Dispose();
     }
 
+    private MMDevice? ResolveSelectedDevice()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedDeviceId))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var enumerator = new MMDeviceEnumerator();
+            return enumerator.GetDevice(SelectedDeviceId);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static float CalculateRms(byte[] buffer, int bytesRecorded)
     {
-        int samples = bytesRecorded / 2;
-        double sum = 0;
-        for (int i = 0; i < bytesRecorded; i += 2)
+        var samples = bytesRecorded / 2;
+        if (samples == 0)
         {
-            short sample = BitConverter.ToInt16(buffer, i);
+            return 0;
+        }
+
+        double sum = 0;
+        for (var i = 0; i < bytesRecorded; i += 2)
+        {
+            var sample = BitConverter.ToInt16(buffer, i);
             sum += sample * sample;
         }
+
         return (float)Math.Sqrt(sum / samples) / short.MaxValue;
     }
 }
+
+public sealed record InputDeviceOption(string Id, string Name);

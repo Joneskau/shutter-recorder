@@ -1,8 +1,10 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Concentus;
 using Concentus.Enums;
 using Concentus.Oggfile;
+using Concentus.Structs;
 using NAudio.Wave;
 using Shutter.Core;
 
@@ -26,7 +28,7 @@ public class OpusEncoder : IEncoder
             using var resampler = new MediaFoundationResampler(reader, outFormat);
             resampler.ResamplerQuality = 60;
 
-            var encoder = Concentus.Structs.OpusEncoder.Create(48000, outFormat.Channels, OpusApplication.OPUS_APPLICATION_AUDIO);
+            var encoder = OpusCodecFactory.CreateEncoder(48000, outFormat.Channels, OpusApplication.OPUS_APPLICATION_AUDIO);
             encoder.Bitrate = bitRate;
 
             using var fileOut = new FileStream(outputPath, FileMode.Create);

@@ -98,27 +98,22 @@ public class EventBus
 
         foreach (var sub in _subscriptions.Where(s => s.EventType.IsAssignableFrom(ev.GetType())))
         {
-            if (ev.IsSuccessPath)
+            bool isSuppressed = suppressOnSuccess.Contains(sub.HandlerId, StringComparer.OrdinalIgnoreCase) ||
+                                suppressOnSuccess.Contains(camelCaseEventName, StringComparer.OrdinalIgnoreCase) ||
+                                suppressOnSuccess.Contains(eventName, StringComparer.OrdinalIgnoreCase);
+
+            bool isNeverSuppress = neverSuppress.Contains(sub.HandlerId, StringComparer.OrdinalIgnoreCase) ||
+                                   neverSuppress.Contains(camelCaseEventName, StringComparer.OrdinalIgnoreCase) ||
+                                   neverSuppress.Contains(eventName, StringComparer.OrdinalIgnoreCase);
+
+            if (isSuppressed && isNeverSuppress)
             {
-                bool isSuppressed = suppressOnSuccess.Contains(sub.HandlerId, StringComparer.OrdinalIgnoreCase) ||
-                                    suppressOnSuccess.Contains(camelCaseEventName, StringComparer.OrdinalIgnoreCase) ||
-                                    suppressOnSuccess.Contains(eventName, StringComparer.OrdinalIgnoreCase);
+                Debug.WriteLine($"WARNING: Caller attempted to suppress neverSuppress-listed entity (Handler: {sub.HandlerId}, Event: {eventName}). Bypassing suppression.");
+            }
 
-                bool isNeverSuppress = neverSuppress.Contains(sub.HandlerId, StringComparer.OrdinalIgnoreCase) ||
-                                       neverSuppress.Contains(camelCaseEventName, StringComparer.OrdinalIgnoreCase) ||
-                                       neverSuppress.Contains(eventName, StringComparer.OrdinalIgnoreCase);
-
-                if (isSuppressed)
-                {
-                    if (isNeverSuppress)
-                    {
-                        Debug.WriteLine($"WARNING: Caller attempted to suppress neverSuppress-listed entity (Handler: {sub.HandlerId}, Event: {eventName}). Bypassing suppression.");
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
+            if (ev.IsSuccessPath && isSuppressed && !isNeverSuppress)
+            {
+                continue;
             }
 
             sub.Action(ev);

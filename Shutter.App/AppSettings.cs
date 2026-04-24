@@ -14,8 +14,11 @@ public class StealthSettings : IStealthConfig
     public int AliveReminderAfterMinutes { get; set; } = 120;
     public string AliveReminderStyle { get; set; } = "taskbar-flash";
     public string FilenameStyle { get; set; } = "timestamp";
+    public string? FilenameRandomizationSalt { get; set; }
+    public long? InstallTimestampMs { get; set; }
     public bool AutoHideOnScreenShare { get; set; } = false;
     public bool AuditLog { get; set; } = true;
+    public bool StealthOnboardingShown { get; set; }
     public List<string> SuppressOnSuccess { get; set; } = new List<string> { "widget", "savedToast", "trayIcon" };
     public List<string> NeverSuppress { get; set; } = new List<string> { "errorToast", "silenceWarning", "micFailure", "hotkeyCollision", "recordingFailed" };
 

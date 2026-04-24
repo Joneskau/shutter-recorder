@@ -17,6 +17,7 @@ public partial class App : Application
     private OverlayWindow? _overlay;
     private NotificationService? _notifications;
     private RecordingHistoryService? _historyService;
+    private DeviceHealthService? _deviceHealthService;
     private HistoryWindow? _historyWindow;
     private TaskbarIcon? _trayIcon;
     private AppSettings? _settings;
@@ -35,6 +36,30 @@ public partial class App : Application
         _hotkeyService = new HotkeyService();
         _overlay = new OverlayWindow();
         _notifications = new NotificationService();
+        _deviceHealthService = new DeviceHealthService();
+        
+        // Layer A: Startup health check
+        var initialResolution = _deviceHealthService.ResolveDevice(_settings.InputDeviceId);
+        if (initialResolution.IsFallback)
+        {
+            _notifications.ShowFallback(initialResolution.OriginalDeviceName, initialResolution.DeviceName);
+        }
+
+        _deviceHealthService.DeviceAdded += (id, name) =>
+        {
+            if (_settings.InputDeviceId == id)
+            {
+                _notifications.ShowDeviceChanged(name, true);
+            }
+        };
+
+        _deviceHealthService.DeviceRemoved += (id, name) =>
+        {
+            if (_settings.InputDeviceId == id)
+            {
+                _notifications.ShowDeviceChanged(name, false);
+            }
+        };
         
         var historyPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ShutterRecorder", "history.json");
         _historyService = new RecordingHistoryService(historyPath);
@@ -64,6 +89,22 @@ public partial class App : Application
             _hotkeyService,
             startRecording: () =>
             {
+                // Layer B: Pre-recording health check
+                var resolution = _deviceHealthService.ResolveDevice(_settings.InputDeviceId);
+                if (string.IsNullOrEmpty(resolution.DeviceId))
+                {
+                    _notifications.ShowError("No microphone detected.");
+                    throw new InvalidOperationException("No input device available");
+                }
+
+                if (resolution.IsFallback)
+                {
+                    _notifications.ShowFallback(resolution.OriginalDeviceName, resolution.DeviceName);
+                }
+
+                _recorderService.SelectedDeviceId = resolution.DeviceId;
+                _overlay.SetFallbackMode(resolution.IsFallback);
+                
                 _recorderService.Start(OutputFolder);
                 _overlay.StartRecording();
             },
@@ -239,6 +280,7 @@ public partial class App : Application
         _trayIcon?.Dispose();
         _notifications?.Dispose();
         _hotkeyService?.Unregister();
+        _deviceHealthService?.Dispose();
         _recorderService?.Dispose();
         
         if (_historyWindow != null)

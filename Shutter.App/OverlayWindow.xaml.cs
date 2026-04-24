@@ -40,8 +40,14 @@ public partial class OverlayWindow : Window
         LevelBar.Opacity = 1.0;
         RecordingDot.Visibility = Visibility.Visible;
         PausedGlyph.Visibility = Visibility.Collapsed;
+        FallbackGlyph.Visibility = Visibility.Collapsed;
         _timer.Start();
         Show();
+    }
+
+    public void SetFallbackMode(bool isFallback)
+    {
+        FallbackGlyph.Visibility = isFallback ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>

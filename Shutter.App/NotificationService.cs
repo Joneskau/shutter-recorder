@@ -30,6 +30,37 @@ public sealed class NotificationService : IDisposable
             .Show();
     }
 
+    public void ShowFallback(string? preferredName, string? fallbackName)
+    {
+        new ToastContentBuilder()
+            .AddText("Microphone Fallback")
+            .AddText($"Configured mic '{preferredName ?? "Unknown"}' not found.")
+            .AddText($"Using '{fallbackName ?? "Default Microphone"}' instead. Edit config to update.")
+            .Show();
+    }
+
+    public void ShowDeviceChanged(string deviceName, bool isAdded)
+    {
+        var status = isAdded ? "reconnected" : "disconnected";
+        var description = isAdded 
+            ? $"Recording will use your preferred mic." 
+            : $"Recording will use default until reconnected.";
+
+        new ToastContentBuilder()
+            .AddText($"Microphone {status}")
+            .AddText($"'{deviceName}' {status}.")
+            .AddText(description)
+            .Show();
+    }
+
+    public void ShowError(string message)
+    {
+        new ToastContentBuilder()
+            .AddText("Recording Error")
+            .AddText(message)
+            .Show();
+    }
+
     private static void OnToastActivated(ToastNotificationActivatedEventArgsCompat args)
     {
         var parsed = ToastArguments.Parse(args.Argument);
